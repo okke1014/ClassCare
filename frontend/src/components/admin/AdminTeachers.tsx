@@ -1,0 +1,142 @@
+"use client";
+
+import { useState } from "react";
+import { Search, MoreHorizontal, UserPlus } from "lucide-react";
+import { MOCK_TEACHERS } from "@/lib/mockData";
+import { cn } from "@/lib/utils";
+
+type TeacherStatus = 'working' | 'vacation' | 'training' | 'resigned';
+
+const STATUS_CONFIG: Record<TeacherStatus, { label: string; bgColor: string; textColor: string }> = {
+  working: { label: 'Working', bgColor: 'bg-green-100', textColor: 'text-green-700' },
+  vacation: { label: 'Vacation', bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
+  training: { label: 'Training', bgColor: 'bg-purple-100', textColor: 'text-purple-700' },
+  resigned: { label: 'Resigned', bgColor: 'bg-gray-100', textColor: 'text-gray-500' },
+};
+
+export function AdminTeachers() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<TeacherStatus | 'all'>('all');
+
+  const filteredTeachers = MOCK_TEACHERS.filter(t => {
+    const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          t.teacherId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          t.subjects.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesFilter = filterStatus === 'all' || t.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusCount = (status: TeacherStatus) => 
+    MOCK_TEACHERS.filter(t => t.status === status).length;
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Search & Add - Fixed Header */}
+      <div className="p-4 bg-white border-b shrink-0">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search teachers..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <button className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0">
+            <UserPlus size={16} />
+            Add
+          </button>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-1.5 mt-3 overflow-x-auto">
+          <button 
+            onClick={() => setFilterStatus('all')}
+            className={cn(
+              "text-xs px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap",
+              filterStatus === 'all' 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            )}
+          >
+            All ({MOCK_TEACHERS.length})
+          </button>
+          {(Object.keys(STATUS_CONFIG) as TeacherStatus[]).map(status => {
+            const config = STATUS_CONFIG[status];
+            const count = getStatusCount(status);
+            return (
+              <button 
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={cn(
+                  "text-xs px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap",
+                  filterStatus === status 
+                    ? `${config.bgColor} ${config.textColor} ring-2 ring-offset-1 ring-current` 
+                    : `${config.bgColor} ${config.textColor} opacity-70 hover:opacity-100`
+                )}
+              >
+                {config.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Teacher List - Scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="divide-y">
+          {filteredTeachers.map(teacher => {
+            const statusConfig = STATUS_CONFIG[teacher.status as TeacherStatus];
+            
+            return (
+              <div 
+                key={teacher.id} 
+                className={cn(
+                  "flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors",
+                  teacher.status === 'resigned' && "opacity-60"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-sm shrink-0">
+                    {teacher.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-sm">{teacher.name}</h3>
+                      <span className="text-[10px] text-gray-400">{teacher.teacherId}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {teacher.subjects.map((subject, idx) => (
+                        <span 
+                          key={idx} 
+                          className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
+                        >
+                          {subject}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-xs px-2 py-0.5 rounded-full",
+                    statusConfig.bgColor,
+                    statusConfig.textColor
+                  )}>
+                    {statusConfig.label}
+                  </span>
+                  <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+                    <MoreHorizontal size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
