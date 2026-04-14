@@ -35,6 +35,20 @@ export const useAudioPlayer = () => {
     setState((prev) => ({ ...prev, currentTime: time }));
   }, []);
 
+  const pause = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || !state.isPlaying) return;
+    audio.pause();
+    setState((prev) => ({ ...prev, isPlaying: false }));
+  }, [state.isPlaying]);
+
+  const play = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || state.isPlaying) return;
+    audio.play();
+    setState((prev) => ({ ...prev, isPlaying: true }));
+  }, [state.isPlaying]);
+
   const setPlaybackRate = useCallback((rate: number) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -73,6 +87,8 @@ export const useAudioPlayer = () => {
     audioRef,
     state,
     togglePlay,
+    pause,
+    play,
     seek,
     setPlaybackRate,
   };

@@ -2,14 +2,11 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Mic, Square, X, Loader2 } from "lucide-react";
-import { Word } from "./AudioScriptPlayer";
+import type { STTWord } from "@/lib/sttData";
 import { cn } from "@/lib/utils";
 
-// In a real implementation, you would import pipeline from @xenova/transformers
-// import { pipeline } from "@xenova/transformers";
-
 interface WordPracticeDialogProps {
-  word: Word;
+  word: STTWord;
   onClose: () => void;
 }
 
@@ -77,12 +74,10 @@ export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
     
     // Random mock score logic for demo
     const randomScore = Math.floor(Math.random() * 40) + 60; // 60-100
-    const mockPhonemes = word.phonemes || "";
-    
     setResult({
         score: randomScore,
-        text: word.word, // Assume recognized correctly for demo
-        phonemes: mockPhonemes // Return same for demo
+        text: word.text,
+        phonemes: word.dictionary_phonetic?.us || "",
     });
     
     setIsProcessing(false);
@@ -102,8 +97,10 @@ export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
         {/* Content */}
         <div className="p-6 flex flex-col items-center gap-6">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-1">{word.word}</h2>
-            <p className="text-gray-500 font-mono text-lg">/{word.phonemes}/</p>
+            <h2 className="text-3xl font-bold mb-1">{word.text}</h2>
+            {word.dictionary_phonetic && (
+              <p className="text-gray-500 font-mono text-lg">{word.dictionary_phonetic.us}</p>
+            )}
           </div>
 
           {/* Result Display */}

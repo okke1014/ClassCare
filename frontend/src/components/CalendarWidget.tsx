@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCalendar } from '@/hooks/ui/useCalendar';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Calendar as CalendarIcon, List } from 'lucide-react';
 import { isSameDay } from '@/lib/dateUtils';
 import { CLASS_PERIODS } from '@/lib/mockData';
 
@@ -30,8 +31,24 @@ export function CalendarWidget() {
     setView
   } = useCalendar();
 
+  const [isCalendarExpanded, setIsCalendarExpanded] = useState(true);
+  const eventListRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectDate = useCallback((date: Date) => {
+    setSelectedDate(date);
+    eventListRef.current?.scrollTo({ top: 0 });
+  }, [setSelectedDate]);
+
   const selectedEvents = getEventsForDate(selectedDate);
   const weekDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const visibleDays = useMemo(() => {
+    if (isCalendarExpanded) return days;
+    const selectedIdx = days.findIndex(d => isSameDay(d.date, selectedDate));
+    if (selectedIdx === -1) return days.slice(0, 7);
+    const rowStart = Math.floor(selectedIdx / 7) * 7;
+    return days.slice(rowStart, rowStart + 7);
+  }, [days, selectedDate, isCalendarExpanded]);
 
   // Helper to calculate top/height for week view events based on period index
   const getEventStyle = (startTime: string, endTime: string) => {
@@ -59,19 +76,19 @@ export function CalendarWidget() {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-white z-10">
         <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold">
+            <h2 className="text-sm font-bold">
             {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
             </h2>
             <button onClick={() => setView(view === 'month' ? 'week' : 'month')} className="p-1 rounded hover:bg-gray-100">
-                {view === 'month' ? <List size={20}/> : <CalendarIcon size={20}/>}
+                {view === 'month' ? <List size={16}/> : <CalendarIcon size={16}/>}
             </button>
         </div>
         <div className="flex gap-1">
-          <button onClick={prev} className="p-2 hover:bg-gray-100 rounded-full">
-            <ChevronLeft className="w-5 h-5" />
+          <button onClick={prev} className="p-1.5 hover:bg-gray-100 rounded-full">
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={next} className="p-2 hover:bg-gray-100 rounded-full">
-            <ChevronRight className="w-5 h-5" />
+          <button onClick={next} className="p-1.5 hover:bg-gray-100 rounded-full">
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -79,19 +96,21 @@ export function CalendarWidget() {
       {/* MONTH VIEW */}
       {view === 'month' && (
           <>
-          <div className="p-2 flex-shrink-0">
+          <div className={cn(
+            "p-2 flex-shrink-0 transition-all duration-300 overflow-hidden",
+          )}>
             <div className="grid grid-cols-7 mb-2 text-center text-xs text-muted-foreground font-medium">
                 {weekDayNames.map((d, i) => (
                     <div key={d} className={cn(
-                        i === 0 && "text-red-500", // Sunday
-                        i === 6 && "text-blue-500" // Saturday
+                        i === 0 && "text-red-500",
+                        i === 6 && "text-blue-500"
                     )}>
                         {d}
                     </div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-2">
-                {days.map((day, idx) => {
+            <div className="grid grid-cols-7 gap-y-1">
+                {visibleDays.map((day, idx) => {
                 const dayEvents = getEventsForDate(day.date);
                 const isSelected = isSameDay(day.date, selectedDate);
                 const isToday = isSameDay(day.date, new Date());
@@ -100,19 +119,20 @@ export function CalendarWidget() {
                 return (
                     <div 
                     key={idx} 
-                    onClick={() => setSelectedDate(day.date)}
+                    onClick={() => handleSelectDate(day.date)}
                     className={cn(
-                        "flex flex-col items-center p-1 min-h-[50px] cursor-pointer relative rounded-md transition-colors",
+                        "flex flex-col items-center p-1 cursor-pointer relative rounded-md transition-colors",
+                        isCalendarExpanded ? "min-h-[44px]" : "min-h-[38px]",
                         !day.isCurrentMonth && "opacity-30",
                         isSelected && "bg-blue-50"
                     )}
                     >
                     <span className={cn(
-                        "text-sm w-7 h-7 flex items-center justify-center rounded-full mb-1",
+                        "text-sm w-7 h-7 flex items-center justify-center rounded-full mb-0.5",
                         isToday && "bg-blue-600 text-white font-bold",
                         !isToday && isSelected && "text-blue-600 font-bold",
-                        !isToday && !isSelected && dayOfWeek === 0 && "text-red-500", // Sunday text
-                        !isToday && !isSelected && dayOfWeek === 6 && "text-blue-500" // Saturday text
+                        !isToday && !isSelected && dayOfWeek === 0 && "text-red-500",
+                        !isToday && !isSelected && dayOfWeek === 6 && "text-blue-500"
                     )}>
                         {day.date.getDate()}
                     </span>
@@ -137,8 +157,28 @@ export function CalendarWidget() {
             </div>
         </div>
 
+        {/* Expand/Collapse Toggle */}
+        <button
+          onClick={() => setIsCalendarExpanded(prev => !prev)}
+          className="flex items-center justify-center py-1 border-t border-b bg-gray-50 hover:bg-gray-100 transition-colors"
+        >
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            {isCalendarExpanded ? (
+              <>
+                <ChevronUp size={14} />
+                <span>Collapse</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown size={14} />
+                <span>Expand</span>
+              </>
+            )}
+          </div>
+        </button>
+
         {/* Selected Date Details (Bottom Sheet style for Month View) */}
-        <div className="flex-1 bg-gray-50 border-t p-4 overflow-y-auto">
+        <div ref={eventListRef} className="flex-1 bg-gray-50 p-4 overflow-y-auto">
             <h3 className="text-sm font-semibold text-gray-500 mb-3">
                 {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </h3>
