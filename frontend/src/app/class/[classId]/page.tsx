@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { AudioScriptPlayer, Word } from "@/components/AudioScriptPlayer";
 import { ChevronLeft, MoreVertical, Share2 } from "lucide-react";
 import { MOCK_EVENTS } from "@/lib/mockData";
@@ -57,8 +58,15 @@ export default function ClassDetailPage() {
             <ChevronLeft className="w-6 h-6" />
         </button>
         <div className="flex flex-col items-center">
-            <h1 className="text-sm font-bold">{event.title}</h1>
-            <span className="text-xs text-muted-foreground uppercase">{event.type}</span>
+            <Image
+              src="/images/ev-system-logo.png"
+              alt="EV Academy"
+              width={100}
+              height={28}
+              className="h-6 w-auto"
+              priority
+            />
+            <span className="text-xs text-muted-foreground mt-0.5">{event.title}</span>
         </div>
         <div className="flex gap-2">
             <button className="p-2 hover:bg-gray-100 rounded-full">

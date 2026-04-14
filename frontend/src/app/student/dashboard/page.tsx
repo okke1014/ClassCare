@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { CalendarWidget } from "@/components/CalendarWidget";
 
 export default function StudentDashboard() {
@@ -26,7 +27,14 @@ export default function StudentDashboard() {
   return (
     <div className="h-screen flex flex-col">
       <div className="p-4 border-b flex justify-between items-center bg-white">
-        <h1 className="text-xl font-bold">ClassCare</h1>
+        <Image
+          src="/images/ev-system-logo.png"
+          alt="EV Academy"
+          width={120}
+          height={32}
+          className="h-8 w-auto"
+          priority
+        />
         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs">
             {user.username[0].toUpperCase()}
         </div>

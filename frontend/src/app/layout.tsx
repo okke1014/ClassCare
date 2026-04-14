@@ -6,8 +6,8 @@ import ReactQueryProvider from "@/lib/react-query-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ClassCare",
-  description: "AI-powered Class Management",
+  title: "ClassCare × EV Academy",
+  description: "AI-powered Class Management System",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body className={inter.className}>
         <ReactQueryProvider>
           <div className="min-h-screen bg-gray-50 flex justify-center">
@@ -29,8 +29,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
-
-
-

@@ -123,7 +123,9 @@ export function CalendarWidget() {
                             key={i} 
                             className={cn(
                                 "w-1.5 h-1.5 rounded-full",
-                                ev.type === 'class' ? 'bg-green-500' : 'bg-orange-400'
+                                ev.status === 'completed' && 'bg-green-500',
+                                ev.status === 'absent' && 'bg-red-500',
+                                ev.status === 'upcoming' && 'bg-blue-400',
                             )} 
                         />
                         ))}
@@ -146,23 +148,40 @@ export function CalendarWidget() {
                     <div className="text-center text-gray-400 py-8">No events</div>
                 ) : (
                     selectedEvents.map(event => (
-                        <div key={event.id} className="bg-white p-3 rounded-lg border shadow-sm flex items-center gap-3">
+                        <div key={event.id} className={cn(
+                            "bg-white p-3 rounded-lg border shadow-sm flex items-center gap-3",
+                            event.status === 'absent' && "bg-red-50/50"
+                        )}>
                             <div className={cn(
                                 "w-1 h-10 rounded-full",
-                                event.type === 'class' ? 'bg-green-500' : 'bg-orange-400'
+                                event.status === 'completed' && 'bg-green-500',
+                                event.status === 'absent' && 'bg-red-500',
+                                event.status === 'upcoming' && 'bg-blue-400',
                             )} />
                             <div 
-                                className="flex-1 cursor-pointer hover:bg-gray-50 p-1 rounded" 
-                                onClick={() => router.push(`/class/${event.id}`)}
+                                className={cn(
+                                    "flex-1 p-1 rounded",
+                                    event.status !== 'absent' && "cursor-pointer hover:bg-gray-50"
+                                )}
+                                onClick={() => event.status !== 'absent' && router.push(`/class/${event.id}`)}
                             >
-                                <h4 className="font-medium text-sm">{event.title}</h4>
+                                <h4 className={cn(
+                                    "font-medium text-sm",
+                                    event.status === 'absent' && "text-red-700"
+                                )}>{event.title}</h4>
                                 <div className="flex gap-2 text-xs text-gray-500">
                                     <span>{event.startTime} - {event.endTime}</span>
-                                    <span className="capitalize">{event.type}</span>
+                                    {event.classroom && <span>{event.classroom}</span>}
                                 </div>
                             </div>
                             {event.status === 'completed' && (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Done</span>
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Completed</span>
+                            )}
+                            {event.status === 'absent' && (
+                                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">Absent</span>
+                            )}
+                            {event.status === 'upcoming' && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">Upcoming</span>
                             )}
                         </div>
                     ))
@@ -242,14 +261,19 @@ export function CalendarWidget() {
                                         <div
                                             key={event.id}
                                             style={style}
-                                            onClick={() => router.push(`/class/${event.id}`)}
+                                            onClick={() => event.status !== 'absent' && router.push(`/class/${event.id}`)}
                                             className={cn(
-                                                "absolute inset-x-0.5 rounded p-1 text-[10px] overflow-hidden shadow-sm border-l-2 opacity-90 z-10 cursor-pointer hover:brightness-95 transition-all",
-                                                event.type === 'class' ? 'bg-green-100 border-green-500 text-green-800' : 'bg-orange-100 border-orange-500 text-orange-800'
+                                                "absolute inset-x-0.5 rounded p-1 text-[10px] overflow-hidden shadow-sm border-l-2 opacity-90 z-10 transition-all",
+                                                event.status !== 'absent' && 'cursor-pointer hover:brightness-95',
+                                                event.status === 'completed' && 'bg-green-100 border-green-500 text-green-800',
+                                                event.status === 'absent' && 'bg-red-100 border-red-500 text-red-800',
+                                                event.status === 'upcoming' && 'bg-blue-50 border-blue-400 text-blue-800',
                                             )}
                                         >
                                             <div className="font-bold truncate">{event.title}</div>
-                                            <div className="truncate">{event.classroom}</div>
+                                            <div className="truncate">
+                                              {event.status === 'absent' ? 'Absent' : event.classroom}
+                                            </div>
                                         </div>
                                     );
                                 })}

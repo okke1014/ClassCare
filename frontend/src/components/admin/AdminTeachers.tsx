@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MoreHorizontal, UserPlus } from "lucide-react";
-import { MOCK_TEACHERS } from "@/lib/mockData";
+import { Search, MoreHorizontal, UserPlus, X, User, Hash, BookOpen } from "lucide-react";
+import { MOCK_TEACHERS, MOCK_SUBJECTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
 type TeacherStatus = 'working' | 'vacation' | 'training' | 'resigned';
@@ -17,6 +17,13 @@ const STATUS_CONFIG: Record<TeacherStatus, { label: string; bgColor: string; tex
 export function AdminTeachers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<TeacherStatus | 'all'>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    teacherId: '',
+    subjects: [] as string[],
+    status: 'working' as TeacherStatus,
+  });
 
   const filteredTeachers = MOCK_TEACHERS.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,7 +51,10 @@ export function AdminTeachers() {
               className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <button className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0 hover:bg-primary/90 transition-colors"
+          >
             <UserPlus size={16} />
             Add
           </button>
@@ -137,6 +147,136 @@ export function AdminTeachers() {
           })}
         </div>
       </div>
+      {/* Add Teacher Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={() => setIsAddModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <UserPlus size={20} className="text-primary" />
+                Add New Teacher
+              </h2>
+              <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  Name <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Enter teacher name"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  Teacher ID <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                  <input
+                    type="text"
+                    value={formData.teacherId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, teacherId: e.target.value }))}
+                    placeholder="TCH-009"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  <span className="flex items-center gap-1">
+                    <BookOpen size={14} />
+                    Subjects
+                  </span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MOCK_SUBJECTS.map(subject => (
+                    <button
+                      key={subject.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          subjects: prev.subjects.includes(subject.name)
+                            ? prev.subjects.filter(s => s !== subject.name)
+                            : [...prev.subjects, subject.name],
+                        }));
+                      }}
+                      className={cn(
+                        "text-xs px-2.5 py-1.5 rounded-lg font-medium transition-all border-2",
+                        formData.subjects.includes(subject.name)
+                          ? "border-blue-400 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      )}
+                    >
+                      {subject.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(STATUS_CONFIG) as TeacherStatus[]).map(status => {
+                    const config = STATUS_CONFIG[status];
+                    return (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, status }))}
+                        className={cn(
+                          "py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center transition-all border-2",
+                          formData.status === status
+                            ? `${config.bgColor} ${config.textColor} border-current`
+                            : "border-gray-200 text-gray-500 hover:border-gray-300"
+                        )}
+                      >
+                        {config.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log('New teacher:', formData);
+                  alert(`Teacher "${formData.name}" has been added.`);
+                  setIsAddModalOpen(false);
+                  setFormData({ name: '', teacherId: '', subjects: [], status: 'working' });
+                }}
+                className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Add Teacher
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

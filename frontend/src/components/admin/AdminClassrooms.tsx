@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MoreHorizontal, Plus, MapPin, Wrench } from "lucide-react";
+import { Search, MoreHorizontal, Plus, MapPin, Wrench, X, Hash, Building } from "lucide-react";
 import { MOCK_ROOMS } from "@/lib/mockData";
+import { cn } from "@/lib/utils";
+
+const FLOORS = ['1F', '2F', '3F', '4F', '5F'];
 
 export function AdminClassrooms() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance'>('all');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    floor: '1F',
+    status: 'active' as 'active' | 'maintenance',
+  });
 
   const filteredClassrooms = MOCK_ROOMS.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -32,7 +41,10 @@ export function AdminClassrooms() {
               className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
-          <button className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0 hover:bg-primary/90 transition-colors"
+          >
             <Plus size={16} />
             Add
           </button>
@@ -115,6 +127,120 @@ export function AdminClassrooms() {
           })}
         </div>
       </div>
+      {/* Add Classroom Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={() => setIsAddModalOpen(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Building size={20} className="text-primary" />
+                Add New Room
+              </h2>
+              <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  Room Name <span className="text-red-400">*</span>
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. 301 H"
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">
+                  <span className="flex items-center gap-1">
+                    <MapPin size={14} />
+                    Floor
+                  </span>
+                </label>
+                <div className="flex gap-2">
+                  {FLOORS.map(floor => (
+                    <button
+                      key={floor}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, floor }))}
+                      className={cn(
+                        "flex-1 py-2.5 px-3 rounded-lg text-sm font-medium transition-all border-2",
+                        formData.floor === floor
+                          ? "border-blue-400 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300"
+                      )}
+                    >
+                      {floor}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, status: 'active' }))}
+                    className={cn(
+                      "flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all border-2",
+                      formData.status === 'active'
+                        ? "bg-green-100 text-green-700 border-current"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    )}
+                  >
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, status: 'maintenance' }))}
+                    className={cn(
+                      "flex-1 py-2.5 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all border-2",
+                      formData.status === 'maintenance'
+                        ? "bg-orange-100 text-orange-700 border-current"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    )}
+                  >
+                    <Wrench size={14} />
+                    Maintenance
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  console.log('New room:', formData);
+                  alert(`Room "${formData.name}" has been added.`);
+                  setIsAddModalOpen(false);
+                  setFormData({ name: '', floor: '1F', status: 'active' });
+                }}
+                className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Add Room
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -164,13 +164,13 @@ function ScheduleModal({ isOpen, onClose, student }: ScheduleModalProps) {
     const file = e.target.files?.[0];
     if (file) {
       // TODO: Parse Excel/Image file
-      alert(`파일 "${file.name}"이(가) 업로드되었습니다.\n실제 구현에서는 파일을 파싱하여 스케줄을 자동 입력합니다.`);
+      alert(`File "${file.name}" has been uploaded.\nIn production, the file will be parsed to auto-fill the schedule.`);
     }
   };
 
   const handleSubmit = () => {
     console.log('Schedule for', student?.name, ':', schedule);
-    alert(`${student?.name}의 스케줄이 등록되었습니다.`);
+    alert(`Schedule for ${student?.name} has been registered.`);
     onClose();
   };
 
@@ -397,7 +397,7 @@ function EditStudentModal({ isOpen, onClose, student }: EditStudentModalProps) {
 
   const handleSubmit = () => {
     console.log('Updated student:', formData);
-    alert(`학생 정보가 수정되었습니다.`);
+    alert(`Student information has been updated.`);
     onClose();
   };
 
@@ -677,7 +677,7 @@ export function AdminStudents() {
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={(data) => {
           console.log('New student:', data);
-          alert(`학생 "${data.name}"이(가) 추가되었습니다.`);
+          alert(`Student "${data.name}" has been added.`);
         }}
       />
       <EditStudentModal

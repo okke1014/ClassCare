@@ -49,7 +49,7 @@ export const MOCK_SUBJECTS = [
 export const MOCK_ROOMS = [
   { id: 1, name: '104 B', floor: '1F', status: 'active' },
   { id: 2, name: '207 B', floor: '2F', status: 'active' },
-  { id: 3, name: '208 E', floor: '2F', status: 'maintenance' }, // 수리 중
+  { id: 3, name: '208 E', floor: '2F', status: 'maintenance' },
   { id: 4, name: '301 H', floor: '3F', status: 'active' },
   { id: 5, name: '304 D', floor: '3F', status: 'active' },
   { id: 6, name: '310 A', floor: '3F', status: 'active' },
@@ -57,7 +57,7 @@ export const MOCK_ROOMS = [
     id: i + 7,
     name: `${Math.floor(i / 10) + 1}${String((i % 10) + 1).padStart(2, '0')} ${String.fromCharCode(65 + (i % 8))}`,
     floor: `${Math.floor(i / 10) + 1}F`,
-    status: i % 15 === 0 ? 'maintenance' : 'active' as const, // 약 7%가 수리 중
+    status: i % 15 === 0 ? 'maintenance' : 'active' as const,
   })),
 ];
 
@@ -115,6 +115,39 @@ const getWeekdayDates = (baseDate: Date): Date[] => {
   return dates;
 };
 
+// Deterministic hash to decide absent classes (seeded by week+day+item)
+const isAbsent = (week: number, dayIndex: number, itemIndex: number): boolean => {
+  const hash = (week * 37 + dayIndex * 13 + itemIndex * 7) % 20;
+  return hash === 3 || hash === 11;
+};
+
+const getEventStatus = (
+  date: Date,
+  endTime: string,
+  week: number,
+  dayIndex: number,
+  itemIndex: number
+): CalendarEvent['status'] => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (eventDay > today) return 'upcoming';
+
+  if (eventDay < today) {
+    return isAbsent(week, dayIndex, itemIndex) ? 'absent' : 'completed';
+  }
+
+  // Same day: compare end time
+  const [endH, endM] = endTime.split(':').map(Number);
+  const endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), endH, endM);
+  if (now >= endDate) {
+    return isAbsent(week, dayIndex, itemIndex) ? 'absent' : 'completed';
+  }
+
+  return 'upcoming';
+};
+
 // Generate calendar events for Janeyang (weekdays only, same schedule every day)
 const generateCalendarEvents = (): CalendarEvent[] => {
   const events: CalendarEvent[] = [];
@@ -128,7 +161,6 @@ const generateCalendarEvents = (): CalendarEvent[] => {
     
     weekdays.forEach((date, dayIndex) => {
       JANEYANG_SCHEDULE.forEach((item, itemIndex) => {
-        // Only include numbered periods (1-11), exclude breaks and special periods like SELF-STUDY
         if (item.subject && !item.isBreak && typeof item.period === 'number') {
           events.push({
             id: `${week}-${dayIndex}-${itemIndex}`,
@@ -137,7 +169,7 @@ const generateCalendarEvents = (): CalendarEvent[] => {
             startTime: item.startTime,
             endTime: item.endTime,
             type: 'class',
-            status: date < new Date() ? 'completed' : 'pending',
+            status: getEventStatus(new Date(date), item.endTime, week, dayIndex, itemIndex),
             classroom: item.room || '',
             teacher: item.teacher || '',
           });

@@ -1,16 +1,28 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, AlertCircle } from "lucide-react";
-import { CLASS_PERIODS, MOCK_ROOMS, generateRoomSchedules, RoomSchedule } from "@/lib/mockData";
+import { ChevronLeft, ChevronRight, Plus, AlertCircle, X } from "lucide-react";
+import { CLASS_PERIODS, MOCK_ROOMS, MOCK_TEACHERS, MOCK_SUBJECTS, MOCK_STUDENTS, generateRoomSchedules, RoomSchedule } from "@/lib/mockData";
 
 // Get class periods only (exclude breaks for grid display)
 const CLASS_ONLY_PERIODS = CLASS_PERIODS.filter(
   p => typeof p.period === 'number'
 ) as { period: number; startTime: string; endTime: string; label: string }[];
 
+const activeRoomsList = MOCK_ROOMS.filter(r => r.status === 'active');
+const activeTeachers = MOCK_TEACHERS.filter(t => t.status === 'working');
+const activeStudents = MOCK_STUDENTS.filter(s => s.status === 'studying');
+
 export function AdminSchedules() {
   const [selectedDate, setSelectedDate] = useState(new Date(2026, 0, 5)); // Jan 5, 2026 (Monday)
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [formData, setFormData] = useState({
+    student: '',
+    teacher: '',
+    subject: '',
+    room: '',
+    period: '',
+  });
 
   const dayOfWeek = selectedDate.getDay();
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -135,9 +147,143 @@ export function AdminSchedules() {
       )}
 
       {/* Floating Action Button */}
-      <button className="absolute bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-transform active:scale-95 z-30">
+      <button
+        onClick={() => setShowAddDialog(true)}
+        className="absolute bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-transform active:scale-95 z-30"
+      >
         <Plus size={24} />
       </button>
+
+      {/* Add Schedule Dialog */}
+      {showAddDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={() => setShowAddDialog(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden animate-in zoom-in-95 fade-in duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Plus size={20} className="text-primary" />
+                Add Schedule
+              </h2>
+              <button
+                onClick={() => setShowAddDialog(false)}
+                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <div className="p-4 space-y-4">
+              {/* Date (read-only) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Date</label>
+                <div className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-700">
+                  {selectedDate.toLocaleDateString('en-US', {
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                  })}
+                </div>
+              </div>
+
+              {/* Student */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Student</label>
+                <select
+                  value={formData.student}
+                  onChange={(e) => setFormData(prev => ({ ...prev, student: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                >
+                  <option value="">Select student</option>
+                  {activeStudents.map(s => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Subject</label>
+                <select
+                  value={formData.subject}
+                  onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                >
+                  <option value="">Select subject</option>
+                  {MOCK_SUBJECTS.map(s => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Teacher */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Teacher</label>
+                <select
+                  value={formData.teacher}
+                  onChange={(e) => setFormData(prev => ({ ...prev, teacher: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                >
+                  <option value="">Select teacher</option>
+                  {activeTeachers.map(t => (
+                    <option key={t.id} value={t.name}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Room */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Room</label>
+                <select
+                  value={formData.room}
+                  onChange={(e) => setFormData(prev => ({ ...prev, room: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                >
+                  <option value="">Select room</option>
+                  {activeRoomsList.map(r => (
+                    <option key={r.id} value={r.name}>{r.name} ({r.floor})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Period */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">Period</label>
+                <select
+                  value={formData.period}
+                  onChange={(e) => setFormData(prev => ({ ...prev, period: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 focus:bg-white transition-colors"
+                >
+                  <option value="">Select period</option>
+                  {CLASS_ONLY_PERIODS.map(p => (
+                    <option key={p.period} value={p.period}>
+                      {p.label} ({p.startTime} - {p.endTime})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowAddDialog(false)}
+                className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddDialog(false);
+                  setFormData({ student: '', teacher: '', subject: '', room: '', period: '' });
+                }}
+                className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Add Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ export interface CalendarEvent {
   startTime?: string; // "14:00"
   endTime?: string;   // "15:00"
   type: 'class' | 'assignment' | 'exam';
-  status: 'pending' | 'completed' | 'missed';
+  status: 'pending' | 'completed' | 'absent' | 'upcoming';
   classroom?: string;
   teacher?: string;
 }
