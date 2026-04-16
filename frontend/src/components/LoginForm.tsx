@@ -51,7 +51,7 @@ export default function LoginForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 focus:bg-white"
-            placeholder="admin or student"
+            placeholder="admin, student, or student1"
             required
             autoComplete="username"
           />
@@ -188,8 +188,9 @@ export default function LoginForm() {
             <path d="M12 8h.01" />
           </svg>
           <p className="text-[11px] text-amber-700">
-            Try: <span className="font-semibold">admin</span> or{" "}
-            <span className="font-semibold">student</span>
+            Try: <span className="font-semibold">admin</span>,{" "}
+            <span className="font-semibold">student</span>, or{" "}
+            <span className="font-semibold">student1</span>
           </p>
         </div>
       </div>

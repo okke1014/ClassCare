@@ -1,20 +1,31 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { AudioScriptPlayer } from "@/components/AudioScriptPlayer";
 import { ChevronLeft, MoreVertical, Share2 } from "lucide-react";
 import { MOCK_EVENTS } from "@/lib/mockData";
 import { STT_ANALYSIS } from "@/lib/sttData";
+import { STT_ANALYSIS_CONDENSED } from "@/lib/sttDataCondensed";
 
 export default function ClassDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { classId } = params;
 
+  const [username, setUsername] = useState<string>("");
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) setUsername(JSON.parse(stored).username || "");
+    } catch {}
+  }, []);
+
   const event = MOCK_EVENTS.find(e => e.id === classId);
 
-  const { lesson_metadata, transcript, learning_report, skill_up_recommendations } = STT_ANALYSIS;
+  const sttData = username === "student1" ? STT_ANALYSIS_CONDENSED : STT_ANALYSIS;
+  const { lesson_metadata, transcript, learning_report, skill_up_recommendations } = sttData;
 
   const classInfo = event
     ? {

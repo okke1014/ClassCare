@@ -27,7 +27,7 @@ export const authService = {
     
     // Mock response for development
     await new Promise((resolve) => setTimeout(resolve, 500));
-    if (username === "admin" || username === "student") {
+    if (username === "admin" || username === "student" || username === "student1") {
         return {
             access_token: "mock_token_" + username,
             token_type: "bearer",
