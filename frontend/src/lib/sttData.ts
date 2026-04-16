@@ -553,11 +553,17 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "credibility?", start: 188020, end: 188860, status: "normal" },
       ],
     },
-    // --- Turn 17: Student ---
+    // --- Turn 17a: Student ---
     {
       speaker: "Student",
       words: [
         { text: "Credibility.", start: 189440, end: 190260, status: "normal" },
+      ],
+    },
+    // --- Turn 17b: Teacher (diarization fix) ---
+    {
+      speaker: "Teacher",
+      words: [
         { text: "I", start: 190900, end: 190900, status: "normal" },
         { text: "think", start: 190900, end: 193140, status: "normal" },
         { text: "the", start: 193140, end: 193320, status: "normal" },
@@ -569,6 +575,12 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "transparency", start: 195240, end: 195960, status: "normal" },
         { text: "and", start: 195960, end: 196480, status: "normal" },
         { text: "credibility.", start: 196480, end: 197160, status: "normal" },
+      ],
+    },
+    // --- Turn 17c: Student ---
+    {
+      speaker: "Student",
+      words: [
         { text: "I", start: 198060, end: 198380, status: "normal" },
         { text: "think", start: 198380, end: 198540, status: "normal" },
         { text: "credibility", start: 198540, end: 199280, status: "normal" },
@@ -577,12 +589,24 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "like", start: 199860, end: 200180, status: "normal" },
         { text: "product", start: 200180, end: 203320, status: "slight", score: 70, feedback: "Grammar: 'more like product itself' → 'more about the product itself'. Missing article." },
         { text: "itself.", start: 203320, end: 203800, status: "normal" },
+      ],
+    },
+    // --- Turn 17d: Teacher (diarization fix) ---
+    {
+      speaker: "Teacher",
+      words: [
         { text: "Oh,", start: 204260, end: 204680, status: "normal" },
         { text: "okay.", start: 205180, end: 205540, status: "normal" },
         { text: "So", start: 205820, end: 206160, status: "normal" },
         { text: "it's", start: 206160, end: 206680, status: "normal" },
         { text: "the", start: 206680, end: 206780, status: "normal" },
         { text: "brand.", start: 206780, end: 207000, status: "normal" },
+      ],
+    },
+    // --- Turn 17e: Student ---
+    {
+      speaker: "Student",
+      words: [
         { text: "The", start: 207680, end: 208320, status: "normal" },
         { text: "product", start: 208320, end: 208560, status: "normal" },
         { text: "itself,", start: 208560, end: 208980, status: "normal" },
@@ -593,6 +617,12 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "original", start: 213160, end: 213540, status: "normal" },
         { text: "or", start: 213540, end: 214140, status: "normal" },
         { text: "not.", start: 214140, end: 215360, status: "normal" },
+      ],
+    },
+    // --- Turn 17f: Teacher (diarization fix) ---
+    {
+      speaker: "Teacher",
+      words: [
         { text: "Or", start: 215560, end: 215640, status: "normal" },
         { text: "not.", start: 215640, end: 215840, status: "normal" },
         { text: "Okay.", start: 216280, end: 216440, status: "normal" },
