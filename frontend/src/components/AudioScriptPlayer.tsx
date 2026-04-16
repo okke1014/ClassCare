@@ -282,29 +282,31 @@ export function AudioScriptPlayer({
                         : "bg-blue-50 rounded-tr-sm"
                     )}
                   >
-                    <div className="flex flex-wrap gap-x-1 gap-y-0.5">
+                    <p className="leading-relaxed">
                       {segment.words.map((word, wi) => {
                         const isActive =
                           activeLocation?.segIndex === si && activeLocation?.wordIndex === wi;
                         const hasIssue = word.status !== "normal";
                         return (
-                          <span
-                            key={wi}
-                            ref={isActive ? activeWordRef : null}
-                            onClick={(e) => !isTeacher && handleWordClick(word, e.currentTarget)}
-                            className={cn(
-                              "transition-all duration-150 rounded px-0.5",
-                              isActive && "bg-yellow-300 text-black",
-                              !isActive && getWordStyle(word, isTeacher),
-                              !isTeacher && "cursor-pointer hover:bg-blue-100",
-                              !isActive && hasIssue && !isTeacher && "font-medium"
-                            )}
-                          >
-                            {word.text}
-                          </span>
+                          <React.Fragment key={wi}>
+                            {wi > 0 && " "}
+                            <span
+                              ref={isActive ? activeWordRef : null}
+                              onClick={(e) => !isTeacher && handleWordClick(word, e.currentTarget)}
+                              className={cn(
+                                "transition-all duration-150 rounded px-0.5 inline",
+                                isActive && "bg-yellow-300 text-black",
+                                !isActive && getWordStyle(word, isTeacher),
+                                !isTeacher && "cursor-pointer hover:bg-blue-100",
+                                !isActive && hasIssue && !isTeacher && "font-medium"
+                              )}
+                            >
+                              {word.text}
+                            </span>
+                          </React.Fragment>
                         );
                       })}
-                    </div>
+                    </p>
                   </div>
                 </div>
                 {/* Avatar for student */}

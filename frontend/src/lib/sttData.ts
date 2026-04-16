@@ -1219,8 +1219,7 @@ export const STT_ANALYSIS: STTAnalysis = {
     {
       speaker: "Student",
       words: [
-        { text: "Clest.", start: 459600, end: 460540, status: "severe", score: 30, feedback: "Pronunciation: 'Clest' is not a recognizable word. The intended meaning is unclear from context." },
-        { text: "Clest.", start: 460900, end: 461340, status: "severe", score: 30, feedback: "Repeated: Same unclear pronunciation attempt." },
+        { text: "Trust.", start: 459600, end: 460540, status: "normal" },
         { text: "Yeah.", start: 461620, end: 461760, status: "normal" },
         { text: "Because", start: 462100, end: 462320, status: "normal" },
         { text: "actually", start: 462320, end: 463360, status: "normal" },
@@ -1822,9 +1821,9 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "right?", start: 707320, end: 707540, status: "normal" },
       ],
     },
-    // --- Turn 45: Student ---
+    // --- Turn 45a: Teacher (diarization fix) ---
     {
-      speaker: "Student",
+      speaker: "Teacher",
       words: [
         { text: "But", start: 707960, end: 708180, status: "normal" },
         { text: "it", start: 708180, end: 708440, status: "normal" },
@@ -1834,7 +1833,19 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "to", start: 709340, end: 709820, status: "normal" },
         { text: "the", start: 709820, end: 711240, status: "normal" },
         { text: "price.", start: 711240, end: 711600, status: "normal" },
+      ],
+    },
+    // --- Turn 45b: Student ---
+    {
+      speaker: "Student",
+      words: [
         { text: "Yeah.", start: 712100, end: 712300, status: "normal" },
+      ],
+    },
+    // --- Turn 45c: Teacher (diarization fix) ---
+    {
+      speaker: "Teacher",
+      words: [
         { text: "It", start: 712520, end: 712660, status: "normal" },
         { text: "will", start: 712660, end: 712780, status: "normal" },
         { text: "still", start: 712780, end: 712960, status: "normal" },
@@ -1845,6 +1856,12 @@ export const STT_ANALYSIS: STTAnalysis = {
         { text: "even", start: 713720, end: 713940, status: "normal" },
         { text: "more", start: 713940, end: 714140, status: "normal" },
         { text: "expensive.", start: 714140, end: 714460, status: "normal" },
+      ],
+    },
+    // --- Turn 45d: Student ---
+    {
+      speaker: "Student",
+      words: [
         { text: "Yeah.", start: 714720, end: 714860, status: "normal" },
       ],
     },
@@ -1900,7 +1917,7 @@ export const STT_ANALYSIS: STTAnalysis = {
     },
   ],
   learning_report: {
-    pronunciation: { score: 62, level: "Developing", summary: "Struggles with multi-syllable words ('personalities'). Mispronounced 'brand' as 'rent'. Unintelligible attempts ('Perfectority', 'Clest') suggest limited phonetic awareness for unfamiliar words." },
+    pronunciation: { score: 64, level: "Developing", summary: "Struggles with multi-syllable words ('personalities'). Mispronounced 'brand' as 'rent'. Unintelligible attempt ('Perfectority') suggests limited phonetic awareness for unfamiliar words." },
     fluency: { score: 65, level: "Developing", summary: "Frequent self-corrections and repetitions ('people, they will have, people will also search'). Uses fillers like 'I think', 'like', 'for me' heavily. Ideas are generally expressed but lack smooth delivery." },
     vocabulary: { score: 60, level: "Developing", summary: "Uses 'explore' instead of 'exposure', 'search people' instead of 'intermediary', 'personal wise' instead of 'personalized'. Limited business vocabulary despite the topic." },
     grammar_accuracy: { score: 55, level: "Basic", summary: "Consistent subject-verb agreement errors ('it have', 'he do', 'he know', 'AI have'). Missing articles ('depends on product'). Incorrect prepositions ('paid for company' → 'paid by')." },
