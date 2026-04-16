@@ -10,6 +10,7 @@ interface WordPracticeDialogProps {
   onClose: () => void;
 }
 
+
 export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
