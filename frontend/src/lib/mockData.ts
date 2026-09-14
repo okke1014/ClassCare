@@ -1,4 +1,4 @@
-import { CalendarEvent } from './dateUtils';
+import { CalendarEvent, addDays } from './dateUtils';
 
 // Class period definitions (45 min each)
 export const CLASS_PERIODS = [
@@ -148,13 +148,25 @@ const getEventStatus = (
   return 'upcoming';
 };
 
+// Find the Monday of the week containing the given date
+const getMondayOfWeek = (date: Date): Date => {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayOfWeek = d.getDay();
+  d.setDate(d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+  return d;
+};
+
 // Generate calendar events for Janeyang (weekdays only, same schedule every day)
 const generateCalendarEvents = (): CalendarEvent[] => {
   const events: CalendarEvent[] = [];
-  const baseDate = new Date(2026, 0, 5); // January 5, 2026 (Monday)
-  
-  // Generate for 4 weeks
-  for (let week = 0; week < 4; week++) {
+  // Base the schedule around today so past weeks show completed/absent classes
+  // and upcoming weeks show scheduled (pending) classes.
+  const WEEKS_BEFORE_TODAY = 3;
+  const TOTAL_WEEKS = 8;
+  const currentWeekMonday = getMondayOfWeek(new Date());
+  const baseDate = addDays(currentWeekMonday, -WEEKS_BEFORE_TODAY * 7);
+
+  for (let week = 0; week < TOTAL_WEEKS; week++) {
     const weekStart = new Date(baseDate);
     weekStart.setDate(baseDate.getDate() + (week * 7));
     const weekdays = getWeekdayDates(weekStart);

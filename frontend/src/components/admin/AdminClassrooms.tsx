@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MoreHorizontal, Plus, MapPin, Wrench, X, Hash, Building } from "lucide-react";
+import { Search, Plus, MapPin, Wrench, X, Hash, Building } from "lucide-react";
 import { MOCK_ROOMS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
+import { useDialog } from "@/hooks/ui/useDialog";
 
 const FLOORS = ['1F', '2F', '3F', '4F', '5F'];
 
@@ -11,6 +13,7 @@ export function AdminClassrooms() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'maintenance'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  useDialog(isAddModalOpen, () => setIsAddModalOpen(false));
   const [formData, setFormData] = useState({
     name: '',
     floor: '1F',
@@ -64,21 +67,19 @@ export function AdminClassrooms() {
           </button>
           <button 
             onClick={() => setFilterStatus('active')}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-              filterStatus === 'active' 
-                ? 'bg-green-600 text-white' 
-                : 'bg-green-50 text-green-700 hover:bg-green-100'
-            }`}
+            className={cn(
+              "text-xs px-3 py-1.5 rounded-full transition-colors bg-green-100 text-green-700",
+              filterStatus === 'active' ? 'ring-2 ring-offset-1 ring-current' : 'opacity-70 hover:opacity-100'
+            )}
           >
             Active ({MOCK_ROOMS.length - maintenanceCount})
           </button>
           <button 
             onClick={() => setFilterStatus('maintenance')}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-              filterStatus === 'maintenance' 
-                ? 'bg-orange-600 text-white' 
-                : 'bg-orange-50 text-orange-700 hover:bg-orange-100'
-            }`}
+            className={cn(
+              "text-xs px-3 py-1.5 rounded-full transition-colors bg-orange-100 text-orange-700",
+              filterStatus === 'maintenance' ? 'ring-2 ring-offset-1 ring-current' : 'opacity-70 hover:opacity-100'
+            )}
           >
             Maintenance ({maintenanceCount})
           </button>
@@ -88,15 +89,19 @@ export function AdminClassrooms() {
       {/* Classroom List - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="divide-y">
+          {filteredClassrooms.length === 0 && (
+            <EmptyState icon={Building} title="No rooms found" description={searchTerm ? `No results for "${searchTerm}".` : "No rooms match this filter."} />
+          )}
           {filteredClassrooms.map(room => {
             const isActive = room.status === 'active';
             
             return (
               <div 
                 key={room.id} 
-                className={`flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors ${
-                  !isActive ? 'bg-orange-50/50' : ''
-                }`}
+                className={cn(
+                  "flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors",
+                  !isActive && "bg-orange-50/50"
+                )}
               >
                 <div className="flex items-center gap-3">
                   {/* Status Icon */}
@@ -118,10 +123,6 @@ export function AdminClassrooms() {
                     </div>
                   </div>
                 </div>
-
-                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                  <MoreHorizontal size={16} />
-                </button>
               </div>
             );
           })}
@@ -137,7 +138,7 @@ export function AdminClassrooms() {
                 <Building size={20} className="text-primary" />
                 Add New Room
               </h2>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+              <button onClick={() => setIsAddModalOpen(false)} aria-label="Close" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
                 <X size={20} />
               </button>
             </div>

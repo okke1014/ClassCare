@@ -17,7 +17,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-white/20" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 -mt-32">
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 pt-8 pb-64">
         {/* Top Branding */}
         <div className="flex flex-col items-center pb-8">
           <div className="w-[90%] max-w-sm mb-4">

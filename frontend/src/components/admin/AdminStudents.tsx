@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, MoreHorizontal, UserPlus, GraduationCap, BookOpen, X, User, Hash, Edit, Calendar, Upload, FileSpreadsheet, Image } from "lucide-react";
+import { Search, MoreHorizontal, UserPlus, GraduationCap, BookOpen, X, User, Hash, Edit, Calendar, Upload, FileSpreadsheet, Image, Users } from "lucide-react";
 import { MOCK_STUDENTS, CLASS_PERIODS, MOCK_TEACHERS, MOCK_ROOMS, MOCK_SUBJECTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
+import { useDialog } from "@/hooks/ui/useDialog";
 
 type StudentStatus = 'studying' | 'graduated';
 
@@ -36,6 +38,7 @@ interface AddStudentModalProps {
 }
 
 function AddStudentModal({ isOpen, onClose, onSubmit }: AddStudentModalProps) {
+  useDialog(isOpen, onClose);
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',
     studentId: '',
@@ -65,7 +68,7 @@ function AddStudentModal({ isOpen, onClose, onSubmit }: AddStudentModalProps) {
             <UserPlus size={20} className="text-primary" />
             Add New Student
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -143,6 +146,7 @@ interface ScheduleModalProps {
 }
 
 function ScheduleModal({ isOpen, onClose, student }: ScheduleModalProps) {
+  useDialog(isOpen, onClose);
   const [schedule, setSchedule] = useState<ScheduleEntry[]>(() => 
     SCHEDULE_PERIODS.map(p => ({
       period: p.period,
@@ -195,15 +199,15 @@ function ScheduleModal({ isOpen, onClose, student }: ScheduleModalProps) {
       <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={onClose} />
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden animate-in zoom-in-95 fade-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-blue-50">
+        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
           <div>
-            <h2 className="text-lg font-bold flex items-center gap-2 text-blue-900">
-              <Calendar size={20} />
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Calendar size={20} className="text-primary" />
               Schedule Registration
             </h2>
-            <p className="text-sm text-blue-700 mt-0.5">{student.name} ({student.studentId})</p>
+            <p className="text-sm text-gray-500 mt-0.5">{student.name} ({student.studentId})</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-blue-100 rounded-full transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -293,7 +297,7 @@ function ScheduleModal({ isOpen, onClose, student }: ScheduleModalProps) {
                           {getPeriodLabel(entry.period)}
                         </span>
                       </td>
-                      <td className="py-1.5 px-2 text-[10px] text-gray-500">
+                      <td className="py-1.5 px-2 text-[11px] text-gray-500">
                         {getPeriodTime(entry.period)}
                       </td>
                       <td className="py-1.5 px-1">
@@ -357,7 +361,7 @@ function ScheduleModal({ isOpen, onClose, student }: ScheduleModalProps) {
           <button onClick={onClose} className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
             Cancel
           </button>
-          <button onClick={handleSubmit} className="flex-1 py-2.5 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+          <button onClick={handleSubmit} className="flex-1 py-2.5 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
             Save Schedule
           </button>
         </div>
@@ -374,6 +378,7 @@ interface EditStudentModalProps {
 }
 
 function EditStudentModal({ isOpen, onClose, student }: EditStudentModalProps) {
+  useDialog(isOpen, onClose);
   const [formData, setFormData] = useState<StudentFormData>({
     name: '',
     studentId: '',
@@ -412,7 +417,7 @@ function EditStudentModal({ isOpen, onClose, student }: EditStudentModalProps) {
             <Edit size={20} className="text-primary" />
             Edit Student
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -618,6 +623,9 @@ export function AdminStudents() {
       {/* Student List */}
       <div className="flex-1 overflow-y-auto">
         <div className="divide-y">
+          {filteredStudents.length === 0 && (
+            <EmptyState icon={Users} title="No students found" description={searchTerm ? `No results for "${searchTerm}".` : "No students match this filter."} />
+          )}
           {filteredStudents.map(student => {
             const statusConfig = STATUS_CONFIG[student.status as StudentStatus];
             const StatusIcon = statusConfig.icon;
@@ -651,6 +659,7 @@ export function AdminStudents() {
                   </span>
                   <button 
                     onClick={(e) => handleMoreClick(e, student)}
+                    aria-label="More options"
                     className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
                   >
                     <MoreHorizontal size={16} />

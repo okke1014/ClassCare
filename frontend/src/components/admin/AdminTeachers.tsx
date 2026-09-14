@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MoreHorizontal, UserPlus, X, User, Hash, BookOpen } from "lucide-react";
+import { Search, UserPlus, X, User, Hash, BookOpen, Users } from "lucide-react";
 import { MOCK_TEACHERS, MOCK_SUBJECTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
+import { useDialog } from "@/hooks/ui/useDialog";
 
 type TeacherStatus = 'working' | 'vacation' | 'training' | 'resigned';
 
@@ -18,6 +20,7 @@ export function AdminTeachers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<TeacherStatus | 'all'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  useDialog(isAddModalOpen, () => setIsAddModalOpen(false));
   const [formData, setFormData] = useState({
     name: '',
     teacherId: '',
@@ -97,6 +100,9 @@ export function AdminTeachers() {
       {/* Teacher List - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         <div className="divide-y">
+          {filteredTeachers.length === 0 && (
+            <EmptyState icon={Users} title="No teachers found" description={searchTerm ? `No results for "${searchTerm}".` : "No teachers match this filter."} />
+          )}
           {filteredTeachers.map(teacher => {
             const statusConfig = STATUS_CONFIG[teacher.status as TeacherStatus];
             
@@ -115,13 +121,13 @@ export function AdminTeachers() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-sm">{teacher.name}</h3>
-                      <span className="text-[10px] text-gray-400">{teacher.teacherId}</span>
+                      <span className="text-[11px] text-gray-400">{teacher.teacherId}</span>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {teacher.subjects.map((subject, idx) => (
                         <span 
                           key={idx} 
-                          className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
+                          className="text-[11px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded"
                         >
                           {subject}
                         </span>
@@ -130,18 +136,13 @@ export function AdminTeachers() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-xs px-2 py-0.5 rounded-full",
-                    statusConfig.bgColor,
-                    statusConfig.textColor
-                  )}>
-                    {statusConfig.label}
-                  </span>
-                  <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                    <MoreHorizontal size={16} />
-                  </button>
-                </div>
+                <span className={cn(
+                  "text-xs px-2 py-0.5 rounded-full",
+                  statusConfig.bgColor,
+                  statusConfig.textColor
+                )}>
+                  {statusConfig.label}
+                </span>
               </div>
             );
           })}
@@ -157,7 +158,7 @@ export function AdminTeachers() {
                 <UserPlus size={20} className="text-primary" />
                 Add New Teacher
               </h2>
-              <button onClick={() => setIsAddModalOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+              <button onClick={() => setIsAddModalOpen(false)} aria-label="Close" className="p-2 hover:bg-gray-200 rounded-full transition-colors">
                 <X size={20} />
               </button>
             </div>

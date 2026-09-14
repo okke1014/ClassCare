@@ -3,8 +3,8 @@ import { addMonths, addWeeks, generateMonthGrid, isSameDay, getWeekDays } from '
 import { MOCK_EVENTS } from '@/lib/mockData';
 
 export const useCalendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 28)); // Start Jan 28, 2026 for demo
-  const [selectedDate, setSelectedDate] = useState(new Date(2026, 0, 28));
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week'>('month');
 
   const days = useMemo(() => {

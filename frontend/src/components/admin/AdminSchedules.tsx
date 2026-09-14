@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Plus, AlertCircle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, AlertCircle, X, CalendarOff } from "lucide-react";
 import { CLASS_PERIODS, MOCK_ROOMS, MOCK_TEACHERS, MOCK_SUBJECTS, MOCK_STUDENTS, generateRoomSchedules, RoomSchedule } from "@/lib/mockData";
+import { EmptyState } from "@/components/EmptyState";
+import { useDialog } from "@/hooks/ui/useDialog";
 
 // Get class periods only (exclude breaks for grid display)
 const CLASS_ONLY_PERIODS = CLASS_PERIODS.filter(
@@ -14,8 +16,9 @@ const activeTeachers = MOCK_TEACHERS.filter(t => t.status === 'working');
 const activeStudents = MOCK_STUDENTS.filter(s => s.status === 'studying');
 
 export function AdminSchedules() {
-  const [selectedDate, setSelectedDate] = useState(new Date(2026, 0, 5)); // Jan 5, 2026 (Monday)
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddDialog, setShowAddDialog] = useState(false);
+  useDialog(showAddDialog, () => setShowAddDialog(false));
   const [formData, setFormData] = useState({
     student: '',
     teacher: '',
@@ -52,34 +55,45 @@ export function AdminSchedules() {
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Date Navigation Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-gray-50 shrink-0">
-        <button onClick={prevDay} className="p-2 hover:bg-gray-200 rounded-full">
-          <ChevronLeft size={20} />
-        </button>
-        <div className="text-center">
-          <h2 className="font-bold text-sm">
-            {selectedDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric',
-              year: 'numeric'
-            })}
-          </h2>
-          <span className="text-xs text-gray-500">
-            {activeRooms.length} rooms in use
-          </span>
+      <div className="p-4 bg-white border-b shrink-0">
+        <div className="flex items-center gap-2">
+          <button onClick={prevDay} aria-label="Previous day" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex-1 text-center">
+            <h2 className="font-bold text-sm">
+              {selectedDate.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </h2>
+            <span className="text-xs text-gray-500">
+              {activeRooms.length} rooms in use
+            </span>
+          </div>
+          <button onClick={nextDay} aria-label="Next day" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ChevronRight size={20} />
+          </button>
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="bg-primary text-primary-foreground px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shrink-0 hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={16} />
+            Add
+          </button>
         </div>
-        <button onClick={nextDay} className="p-2 hover:bg-gray-200 rounded-full">
-          <ChevronRight size={20} />
-        </button>
       </div>
 
       {/* Weekend Notice */}
       {isWeekend ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-gray-500">
-          <AlertCircle size={48} className="mb-4 text-gray-300" />
-          <p className="text-lg font-medium">No Classes on Weekends</p>
-          <p className="text-sm mt-1">Classes are only held on weekdays (Mon-Fri)</p>
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon={AlertCircle}
+            title="No Classes on Weekends"
+            description="Classes are only held on weekdays (Mon-Fri)"
+          />
         </div>
       ) : (
         /* Schedule Grid */
@@ -93,7 +107,7 @@ export function AdminSchedules() {
               {CLASS_ONLY_PERIODS.map(period => (
                 <div key={period.period} className="flex-1 min-w-[55px] p-1 text-center border-r bg-gray-50">
                   <div className="text-xs font-medium text-gray-700">{period.label}</div>
-                  <div className="text-[10px] text-gray-400">{period.startTime}</div>
+                  <div className="text-[11px] text-gray-400">{period.startTime}</div>
                 </div>
               ))}
             </div>
@@ -121,7 +135,7 @@ export function AdminSchedules() {
                         >
                           {schedule && (
                             <div 
-                              className="absolute inset-0.5 rounded text-white text-[10px] p-1 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                              className="absolute inset-0.5 rounded text-white text-[11px] p-1 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                               style={{ backgroundColor: schedule.subjectColor }}
                             >
                               <div className="font-bold truncate">{schedule.student}</div>
@@ -138,21 +152,15 @@ export function AdminSchedules() {
 
             {/* Empty Rooms Section */}
             {activeRooms.length === 0 && (
-              <div className="p-8 text-center text-gray-500">
-                <p>No rooms have schedules for this day.</p>
-              </div>
+              <EmptyState
+                icon={CalendarOff}
+                title="No rooms have schedules for this day."
+                action={{ label: "Add Schedule", onClick: () => setShowAddDialog(true) }}
+              />
             )}
           </div>
         </div>
       )}
-
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setShowAddDialog(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-transform active:scale-95 z-30"
-      >
-        <Plus size={24} />
-      </button>
 
       {/* Add Schedule Dialog */}
       {showAddDialog && (
@@ -167,6 +175,7 @@ export function AdminSchedules() {
               </h2>
               <button
                 onClick={() => setShowAddDialog(false)}
+                aria-label="Close"
                 className="p-2 hover:bg-gray-200 rounded-full transition-colors"
               >
                 <X size={20} />

@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
+import { CalendarX } from "lucide-react";
+import { AppHeader } from "@/components/AppHeader";
 import { AudioScriptPlayer } from "@/components/AudioScriptPlayer";
-import { ChevronLeft, MoreVertical, Share2 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { MOCK_EVENTS } from "@/lib/mockData";
 import { STT_ANALYSIS } from "@/lib/sttData";
 import { STT_ANALYSIS_CONDENSED } from "@/lib/sttDataCondensed";
@@ -25,6 +26,8 @@ export default function ClassDetailPage() {
   const event = MOCK_EVENTS.find(e => e.id === classId);
 
   const sttData = username === "student1" ? STT_ANALYSIS_CONDENSED : STT_ANALYSIS;
+  const nativeLanguage = username === "student1" ? "ja" : "ko";
+  const studentName = "Eric";
   const { lesson_metadata, transcript, learning_report, skill_up_recommendations } = sttData;
 
   const classInfo = event
@@ -44,37 +47,29 @@ export default function ClassDetailPage() {
         time: lesson_metadata.date,
       };
 
-  if (!event) return <div className="p-4">Class not found</div>;
+  if (!event) {
+    return (
+      <div className="flex flex-col h-screen bg-background">
+        <AppHeader onBack={() => router.back()} />
+        <div className="flex-1 flex items-center justify-center">
+          <EmptyState
+            icon={CalendarX}
+            title="Class not found"
+            description="This class may have been removed or the link is no longer valid."
+            action={{
+              label: "Back to calendar",
+              onClick: () => router.push("/student/dashboard"),
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white z-10 shrink-0">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full">
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-        <div className="flex flex-col items-center">
-          <Image
-            src="/images/ev-system-logo.png"
-            alt="EV Academy"
-            width={100}
-            height={28}
-            className="h-6 w-auto"
-            priority
-          />
-          <span className="text-xs text-muted-foreground mt-0.5">{event.title}</span>
-        </div>
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <Share2 size={20} />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <MoreVertical size={20} />
-          </button>
-        </div>
-      </div>
+      <AppHeader onBack={() => router.back()} />
 
-      {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <AudioScriptPlayer
           audioUrl={lesson_metadata.audio_url}
@@ -83,6 +78,8 @@ export default function ClassDetailPage() {
           overallScore={lesson_metadata.overall_pronunciation_score}
           learningReport={learning_report}
           recommendations={skill_up_recommendations}
+          nativeLanguage={nativeLanguage}
+          studentName={studentName}
         />
       </div>
     </div>

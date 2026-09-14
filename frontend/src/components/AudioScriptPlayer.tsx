@@ -3,8 +3,10 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import { useAudioPlayer } from "@/hooks/ui/useAudioPlayer";
 import { cn } from "@/lib/utils";
-import { Play, Pause, Mic, Volume2, X, ChevronRight } from "lucide-react";
+import { Play, Pause, Volume2, X, ChevronRight, Languages, Loader2 } from "lucide-react";
 import type { STTSegment, STTWord, SkillScore, SkillUpRecommendation } from "@/lib/sttData";
+import { getTranslation, type NativeLanguage } from "@/lib/analysisTranslations";
+import { WordDictionaryPopup } from "@/components/vocab/WordDictionaryPopup";
 
 export interface ClassInfo {
   title: string;
@@ -20,6 +22,8 @@ interface AudioScriptPlayerProps {
   overallScore?: number;
   learningReport?: Record<string, SkillScore>;
   recommendations?: SkillUpRecommendation[];
+  nativeLanguage?: NativeLanguage;
+  studentName?: string;
 }
 
 export function AudioScriptPlayer({
@@ -29,6 +33,8 @@ export function AudioScriptPlayer({
   overallScore,
   learningReport,
   recommendations,
+  nativeLanguage,
+  studentName,
 }: AudioScriptPlayerProps) {
   const { audioRef, state, togglePlay, pause, play, seek, setPlaybackRate } = useAudioPlayer();
   const wasPlayingRef = useRef(false);
@@ -38,6 +44,13 @@ export function AudioScriptPlayer({
   const [selectedWord, setSelectedWord] = useState<STTWord | null>(null);
   const [isPlayingWord, setIsPlayingWord] = useState(false);
   const [activeTab, setActiveTab] = useState<"script" | "report">("script");
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
+  const [dictionaryWord, setDictionaryWord] = useState<string | null>(null);
+  const [segmentTranslation, setSegmentTranslation] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationFailed, setTranslationFailed] = useState(false);
+  const [translationAttempt, setTranslationAttempt] = useState(0);
+  const translationCacheRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,6 +91,48 @@ export function AudioScriptPlayer({
       });
     }
   }, [activeLocation, state.isPlaying]);
+
+  useEffect(() => {
+    if (selectedSegmentIndex === null) return;
+    const segment = transcript[selectedSegmentIndex];
+    if (!segment) return;
+
+    const text = segment.words.map((w) => w.text).join(" ");
+    const language = nativeLanguage ?? "ko";
+    const cacheKey = `${language}:${text}`;
+    const cached = translationCacheRef.current.get(cacheKey);
+
+    if (cached) {
+      setSegmentTranslation(cached);
+      setTranslationFailed(false);
+      setIsTranslating(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSegmentTranslation(null);
+    setTranslationFailed(false);
+    setIsTranslating(true);
+
+    fetch(`/api/translate?tl=${language}&q=${encodeURIComponent(text)}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("request failed"))))
+      .then((data: { text?: string }) => {
+        if (cancelled) return;
+        if (!data.text) throw new Error("empty translation");
+        translationCacheRef.current.set(cacheKey, data.text);
+        setSegmentTranslation(data.text);
+      })
+      .catch(() => {
+        if (!cancelled) setTranslationFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsTranslating(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSegmentIndex, transcript, nativeLanguage, translationAttempt]);
 
   const handleWordClick = (word: STTWord, element: HTMLElement) => {
     wasPlayingRef.current = state.isPlaying;
@@ -192,6 +247,40 @@ export function AudioScriptPlayer({
     return "text-gray-700 bg-gray-100";
   };
 
+  const feedbackTranslation = getTranslation(selectedWord?.feedback, nativeLanguage);
+
+  const handleSegmentClick = (segmentIndex: number, startMs?: number) => {
+    const start = startMs ?? transcript[segmentIndex]?.words[0]?.start;
+    if (typeof start === "number") {
+      seek(start / 1000);
+    }
+    pause();
+    setSelectedWord(null);
+    setSelectedSegmentIndex(segmentIndex);
+  };
+
+  const handleCloseSegmentPopup = () => {
+    setSelectedSegmentIndex(null);
+    setSegmentTranslation(null);
+    setIsTranslating(false);
+    setTranslationFailed(false);
+    play();
+  };
+
+  const handleStudentSentenceClick = (segment: STTSegment) => {
+    const start = segment.words[0]?.start;
+    if (typeof start === "number") {
+      seek(start / 1000);
+    }
+    setSelectedWord(null);
+    play();
+  };
+
+  const getInitial = (name?: string, fallback: string = "?") =>
+    name?.trim() ? name.trim()[0].toUpperCase() : fallback;
+  const teacherInitial = getInitial(classInfo?.teacher, "T");
+  const studentInitial = getInitial(studentName, "S");
+
   return (
     <div className="flex flex-col h-full bg-white text-foreground overflow-hidden relative">
       <audio ref={audioRef} src={audioUrl} />
@@ -229,19 +318,19 @@ export function AudioScriptPlayer({
         <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 relative">
           {/* Class Info */}
           {classInfo && (
-            <div className="p-3 bg-gray-50 rounded-lg border text-sm mb-4">
-              <div className="font-bold text-base mb-1.5">{classInfo.title}</div>
+            <div className="p-3 bg-gray-50 rounded-xl border text-sm mb-4">
+              <div className="font-semibold text-base mb-1.5">{classInfo.title}</div>
               <div className="grid grid-cols-3 gap-1 text-gray-500 text-xs">
                 <div>
-                  <span className="block text-gray-400 uppercase" style={{ fontSize: 10 }}>Room</span>
+                  <span className="block text-[11px] text-gray-400 uppercase">Room</span>
                   {classInfo.classroom}
                 </div>
                 <div>
-                  <span className="block text-gray-400 uppercase" style={{ fontSize: 10 }}>Teacher</span>
+                  <span className="block text-[11px] text-gray-400 uppercase">Teacher</span>
                   {classInfo.teacher}
                 </div>
                 <div>
-                  <span className="block text-gray-400 uppercase" style={{ fontSize: 10 }}>Time</span>
+                  <span className="block text-[11px] text-gray-400 uppercase">Time</span>
                   {classInfo.time}
                 </div>
               </div>
@@ -261,25 +350,48 @@ export function AudioScriptPlayer({
             const isTeacher = segment.speaker === "Teacher";
             return (
               <div key={si} className={cn("flex gap-2", isTeacher ? "justify-start" : "justify-end")}>
-                {/* Avatar */}
                 {isTeacher && (
                   <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold shrink-0 mt-1">
-                    T
+                    {teacherInitial}
                   </div>
                 )}
                 <div className={cn("max-w-[85%] min-w-0")}>
                   <span className={cn(
-                    "text-[10px] font-medium mb-0.5 block",
-                    isTeacher ? "text-blue-600" : "text-green-600 text-right"
+                    "text-[11px] font-medium mb-0.5 flex items-center gap-1",
+                    isTeacher ? "text-blue-600" : "text-green-600 justify-end"
                   )}>
                     {segment.speaker}
+                    {isTeacher && (
+                      <span className="text-gray-400 inline-flex items-center gap-0.5">
+                        <Languages size={10} />
+                        Tap to translate
+                      </span>
+                    )}
                   </span>
                   <div
-                    className={cn(
-                      "rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                    role="button"
+                    tabIndex={0}
+                    aria-label={
                       isTeacher
-                        ? "bg-gray-100 rounded-tl-sm"
-                        : "bg-blue-50 rounded-tr-sm"
+                        ? "Translate this sentence"
+                        : "Play from this sentence"
+                    }
+                    onClick={isTeacher ? () => handleSegmentClick(si) : () => handleStudentSentenceClick(segment)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        if (isTeacher) {
+                          handleSegmentClick(si);
+                        } else {
+                          handleStudentSentenceClick(segment);
+                        }
+                      }
+                    }}
+                    className={cn(
+                      "rounded-2xl px-3 py-2 text-sm leading-relaxed cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400",
+                      isTeacher
+                        ? "bg-gray-100 rounded-tl-sm hover:bg-gray-200"
+                        : "bg-blue-50 rounded-tr-sm hover:bg-blue-100"
                     )}
                   >
                     <p className="leading-relaxed">
@@ -292,12 +404,19 @@ export function AudioScriptPlayer({
                             {wi > 0 && " "}
                             <span
                               ref={isActive ? activeWordRef : null}
-                              onClick={(e) => !isTeacher && handleWordClick(word, e.currentTarget)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isTeacher) {
+                                  handleSegmentClick(si, word.start);
+                                } else {
+                                  handleWordClick(word, e.currentTarget);
+                                }
+                              }}
                               className={cn(
-                                "transition-all duration-150 rounded px-0.5 inline",
+                                "transition-all duration-150 rounded px-0.5 inline cursor-pointer",
                                 isActive && "bg-yellow-300 text-black",
                                 !isActive && getWordStyle(word, isTeacher),
-                                !isTeacher && "cursor-pointer hover:bg-blue-100",
+                                !isActive && (isTeacher ? "hover:bg-gray-300" : "hover:bg-blue-100"),
                                 !isActive && hasIssue && !isTeacher && "font-medium"
                               )}
                             >
@@ -309,10 +428,9 @@ export function AudioScriptPlayer({
                     </p>
                   </div>
                 </div>
-                {/* Avatar for student */}
                 {!isTeacher && (
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold shrink-0 mt-1">
-                    S
+                    {studentInitial}
                   </div>
                 )}
               </div>
@@ -325,7 +443,6 @@ export function AudioScriptPlayer({
       {/* Report Tab */}
       {activeTab === "report" && (
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-          {/* Learning Report */}
           {learningReport && (
             <div>
               <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5">
@@ -333,29 +450,36 @@ export function AudioScriptPlayer({
                 Learning Report
               </h3>
               <div className="space-y-2">
-                {Object.entries(learningReport).map(([key, val]) => (
-                  <div key={key} className={cn("p-3 rounded-lg border", getScoreBg(val.score))}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-gray-700 capitalize">
-                        {key.replace(/_/g, " ")}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium", getLevelColor(val.level))}>
-                          {val.level}
+                {Object.entries(learningReport).map(([key, val]) => {
+                  const summaryTranslation = getTranslation(val.summary, nativeLanguage);
+                  return (
+                    <div key={key} className={cn("p-3 rounded-xl border", getScoreBg(val.score))}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-semibold text-gray-700 capitalize">
+                          {key.replace(/_/g, " ")}
                         </span>
-                        <span className={cn("text-lg font-black", getScoreColor(val.score))}>
-                          {val.score}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={cn("text-xs px-1.5 py-0.5 rounded-full font-medium", getLevelColor(val.level))}>
+                            {val.level}
+                          </span>
+                          <span className={cn("text-lg font-black", getScoreColor(val.score))}>
+                            {val.score}
+                          </span>
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">{val.summary}</p>
+                      {summaryTranslation && (
+                        <p className="text-xs text-gray-500 leading-relaxed mt-1 pt-1 border-t border-gray-200/60">
+                          {summaryTranslation}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-600 leading-relaxed">{val.summary}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* Skill-Up Recommendations */}
           {recommendations && recommendations.length > 0 && (
             <div>
               <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1.5">
@@ -363,33 +487,113 @@ export function AudioScriptPlayer({
                 Skill-Up Recommendations
               </h3>
               <div className="space-y-3">
-                {recommendations.map((rec, i) => (
-                  <div key={i} className="p-3 bg-white rounded-lg border shadow-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-[10px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded">
-                        {rec.category}
-                      </span>
-                      <span className="text-[10px] text-gray-400">{rec.focus_skill}</span>
-                    </div>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex items-start gap-2">
-                        <span className="text-red-400 text-xs mt-0.5 shrink-0">Before</span>
-                        <p className="text-gray-500 line-through text-xs leading-relaxed">{rec.original}</p>
+                {recommendations.map((rec, i) => {
+                  const reasonTranslation = getTranslation(rec.reason, nativeLanguage);
+                  return (
+                    <div key={i} className="p-3 bg-white rounded-xl border shadow-sm">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[11px] font-bold text-white bg-blue-600 px-1.5 py-0.5 rounded">
+                          {rec.category}
+                        </span>
+                        <span className="text-[11px] text-gray-400">{rec.focus_skill}</span>
                       </div>
-                      <div className="flex items-start gap-2">
-                        <span className="text-green-500 text-xs mt-0.5 shrink-0">After</span>
-                        <p className="text-gray-800 font-medium text-xs leading-relaxed">{rec.improved}</p>
+                      <div className="space-y-1.5 text-sm">
+                        <div className="flex items-start gap-2">
+                          <span className="text-red-400 text-xs mt-0.5 shrink-0">Before</span>
+                          <p className="text-gray-500 line-through text-xs leading-relaxed">{rec.original}</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="text-green-500 text-xs mt-0.5 shrink-0">After</span>
+                          <p className="text-gray-800 font-medium text-xs leading-relaxed">{rec.improved}</p>
+                        </div>
+                        <p className="text-[11px] text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1 leading-relaxed">
+                          {rec.reason}
+                        </p>
+                        {reasonTranslation && (
+                          <p className="text-[11px] text-gray-500 bg-gray-50 px-2 py-1 rounded leading-relaxed">
+                            {reasonTranslation}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-[11px] text-blue-600 bg-blue-50 px-2 py-1 rounded mt-1">
-                        {rec.reason}
-                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
           <div className="h-24" />
+        </div>
+      )}
+
+      {/* Sentence Translation Popup */}
+      {selectedSegmentIndex !== null && transcript[selectedSegmentIndex] && (
+        <div className="absolute bottom-[140px] left-4 right-4 bg-white rounded-xl shadow-2xl border border-gray-200 animate-in slide-in-from-bottom-5 z-20 overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+            <h3 className="text-sm font-bold flex items-center gap-2">
+              <Languages size={16} className="text-blue-500" />
+              Translation
+            </h3>
+            <button onClick={handleCloseSegmentPopup} aria-label="Close" className="text-gray-400 hover:text-gray-600 p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="p-4 space-y-3 max-h-[45vh] overflow-y-auto">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {transcript[selectedSegmentIndex].words.map((w, wi) => (
+                <React.Fragment key={wi}>
+                  {wi > 0 && " "}
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDictionaryWord(w.text.replace(/[.,!?;:'"]/g, ""));
+                    }}
+                    className="cursor-pointer rounded px-0.5 hover:bg-blue-100 transition-colors"
+                  >
+                    {w.text}
+                  </span>
+                </React.Fragment>
+              ))}
+            </p>
+            <p className="text-[11px] text-gray-400 -mt-2 flex items-center gap-1">
+              <Languages size={11} />
+              Tap a word to look it up
+            </p>
+
+            <div className="border-t border-gray-100" />
+
+            {isTranslating && (
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <Loader2 size={14} className="animate-spin" />
+                Translating...
+              </div>
+            )}
+
+            {translationFailed && !isTranslating && (
+              <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50">
+                <span className="text-xs text-red-600">Translation unavailable.</span>
+                <button
+                  onClick={() => setTranslationAttempt((n) => n + 1)}
+                  className="text-xs font-medium text-red-700 underline"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            {segmentTranslation && !isTranslating && (
+              <p className="px-3 py-2 rounded-lg bg-blue-50 text-sm text-blue-800 leading-relaxed">
+                {segmentTranslation}
+              </p>
+            )}
+
+            <button
+              onClick={handleCloseSegmentPopup}
+              className="w-full py-2.5 rounded-lg border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 text-sm"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
 
@@ -405,33 +609,32 @@ export function AudioScriptPlayer({
                 </span>
               )}
             </div>
-            <button onClick={handleCloseWordPopup} className="text-gray-400 hover:text-gray-600 p-1">
+            <button onClick={handleCloseWordPopup} aria-label="Close" className="text-gray-400 hover:text-gray-600 p-1">
               <X size={20} />
             </button>
           </div>
 
           <div className="p-4 space-y-3">
-            {/* Phonetics */}
             {selectedWord.dictionary_phonetic && (
               <div className="flex divide-x divide-gray-100">
                 <div className="flex-1 flex flex-col items-center gap-1 px-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">UK</span>
+                  <span className="text-[11px] font-bold text-gray-400 uppercase">UK</span>
                   <div className="flex items-center gap-1">
                     <span className="font-mono text-sm text-gray-600">
                       {selectedWord.dictionary_phonetic.uk}
                     </span>
-                    <button onClick={() => speakWord(selectedWord.text, "en-GB")} className="text-blue-500 hover:bg-blue-50 p-0.5 rounded-full">
+                    <button onClick={() => speakWord(selectedWord.text, "en-GB")} aria-label="Listen in British English" className="text-blue-500 hover:bg-blue-50 p-0.5 rounded-full">
                       <Volume2 size={14} />
                     </button>
                   </div>
                 </div>
                 <div className="flex-1 flex flex-col items-center gap-1 px-2">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">US</span>
+                  <span className="text-[11px] font-bold text-gray-400 uppercase">US</span>
                   <div className="flex items-center gap-1">
                     <span className="font-mono text-sm text-gray-600">
                       {selectedWord.dictionary_phonetic.us}
                     </span>
-                    <button onClick={() => speakWord(selectedWord.text, "en-US")} className="text-blue-500 hover:bg-blue-50 p-0.5 rounded-full">
+                    <button onClick={() => speakWord(selectedWord.text, "en-US")} aria-label="Listen in American English" className="text-blue-500 hover:bg-blue-50 p-0.5 rounded-full">
                       <Volume2 size={14} />
                     </button>
                   </div>
@@ -439,12 +642,11 @@ export function AudioScriptPlayer({
               </div>
             )}
 
-            {/* User pronunciation */}
             <>
               <div className="border-t border-gray-100" />
               <div className="flex items-center justify-between px-2">
                 <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase block">Your Pronunciation</span>
+                  <span className="text-[11px] font-bold text-gray-400 uppercase block">Your Pronunciation</span>
                   <div className="flex items-center gap-2">
                     {selectedWord.user_phonetic ? (
                       <span className={cn("font-mono text-sm", selectedWord.status === "severe" ? "text-red-500" : "text-amber-500")}>
@@ -455,6 +657,7 @@ export function AudioScriptPlayer({
                     )}
                     <button
                       onClick={() => playWordSegment(selectedWord)}
+                      aria-label="Play your pronunciation"
                       className={cn(
                         "p-0.5 rounded-full",
                         isPlayingWord
@@ -469,7 +672,6 @@ export function AudioScriptPlayer({
               </div>
             </>
 
-            {/* Feedback */}
             {selectedWord.feedback && (
               <>
                 <div className="border-t border-gray-100" />
@@ -479,6 +681,14 @@ export function AudioScriptPlayer({
                 )}>
                   {selectedWord.feedback}
                 </div>
+                {feedbackTranslation && (
+                  <div className={cn(
+                    "px-3 py-2 rounded-lg text-xs leading-relaxed",
+                    selectedWord.status === "severe" ? "bg-red-50/60 text-red-600" : "bg-amber-50/60 text-amber-600"
+                  )}>
+                    {feedbackTranslation}
+                  </div>
+                )}
               </>
             )}
 
@@ -492,11 +702,21 @@ export function AudioScriptPlayer({
         </div>
       )}
 
+      {/* Word Dictionary Popup */}
+      {dictionaryWord && (
+        <WordDictionaryPopup
+          word={dictionaryWord}
+          nativeLanguage={nativeLanguage}
+          onClose={() => setDictionaryWord(null)}
+        />
+      )}
+
       {/* Control Bar */}
       <div className="bg-white border-t border-gray-200 p-4 shrink-0 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-8">
         <div className="flex items-center gap-4">
           <button
             onClick={togglePlay}
+            aria-label={state.isPlaying ? "Pause" : "Play"}
             className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-95 transition-transform shrink-0"
           >
             {state.isPlaying ? (
@@ -512,6 +732,7 @@ export function AudioScriptPlayer({
               min={0}
               max={state.duration || 100}
               value={state.currentTime}
+              aria-label="Seek audio position"
               onChange={(e) => seek(Number(e.target.value))}
               className="w-full h-1.5 bg-gray-200 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary cursor-pointer accent-primary"
             />
@@ -527,7 +748,8 @@ export function AudioScriptPlayer({
               const nextIndex = (rates.indexOf(state.playbackRate) + 1) % rates.length;
               setPlaybackRate(rates[nextIndex]);
             }}
-            className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md px-2 py-1.5 min-w-[3rem] text-center transition-colors shrink-0"
+            aria-label={`Playback speed ${state.playbackRate}x, tap to change`}
+            className="text-xs font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg px-2 py-1.5 min-w-[3rem] text-center transition-colors shrink-0"
           >
             {state.playbackRate}x
           </button>
