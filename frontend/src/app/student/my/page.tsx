@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 
 export default function StudentMyPage() {
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <AppHeader title="My Info" />
 
       <div className="flex-1 overflow-y-auto bg-gray-50 flex items-center justify-center">

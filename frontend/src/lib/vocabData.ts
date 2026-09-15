@@ -5,12 +5,13 @@ import type { NativeLanguage } from "@/lib/analysisTranslations";
 export interface VocabDefinition {
   pos: string;
   text: string;
-  translation: Record<NativeLanguage, string>;
+  // Partial: dictionary-lookup results only translate into the student's current native language.
+  translation: Partial<Record<NativeLanguage, string>>;
 }
 
 export interface VocabExample {
   text: string;
-  translation: Record<NativeLanguage, string>;
+  translation: Partial<Record<NativeLanguage, string>>;
 }
 
 export interface VocabWord {

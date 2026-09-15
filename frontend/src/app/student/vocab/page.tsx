@@ -69,7 +69,7 @@ export default function VocabPage() {
     screen === "word" ? "Dictionary Lookup" : screen === "test" ? activeMode.label : "Vocab Books";
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <AppHeader title={headerTitle} onBack={handleBack} />
 
       {screen === "list" && (

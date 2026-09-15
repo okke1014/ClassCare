@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, Star, Volume2, X } from "lucide-react";
-import { findVocabWordByText } from "@/lib/vocabData";
+import { findVocabWordByText, type VocabDefinition, type VocabExample } from "@/lib/vocabData";
 import { speak } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 import type { NativeLanguage } from "@/lib/analysisTranslations";
@@ -14,11 +14,18 @@ interface WordDictionaryPopupProps {
   onClose: () => void;
 }
 
+interface DictionaryLookup {
+  phonetic: { uk: string; us: string };
+  definitions: VocabDefinition[];
+  examples: VocabExample[];
+  meaning?: string;
+}
+
 export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDictionaryPopupProps) {
   const { addWord, getStatus } = useVocabProgress();
   const curated = findVocabWordByText(word);
 
-  const [meaning, setMeaning] = useState<string | null>(curated?.meaning ?? null);
+  const [lookup, setLookup] = useState<DictionaryLookup | null>(null);
   const [isLoadingMeaning, setIsLoadingMeaning] = useState(!curated);
   const [meaningFailed, setMeaningFailed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -29,13 +36,16 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
     let cancelled = false;
     setIsLoadingMeaning(true);
     setMeaningFailed(false);
+    setLookup(null);
 
-    fetch(`/api/translate?tl=${nativeLanguage ?? "ko"}&q=${encodeURIComponent(word)}`)
+    fetch(`/api/dictionary?tl=${nativeLanguage ?? "ko"}&q=${encodeURIComponent(word)}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error("request failed"))))
-      .then((data: { text?: string }) => {
+      .then((data: DictionaryLookup & { error?: string }) => {
         if (cancelled) return;
-        if (!data.text) throw new Error("empty translation");
-        setMeaning(data.text);
+        if (data.error || (data.definitions.length === 0 && !data.meaning)) {
+          throw new Error("no lookup data");
+        }
+        setLookup(data);
       })
       .catch(() => {
         if (!cancelled) setMeaningFailed(true);
@@ -51,12 +61,18 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
   }, [word, retryCount]);
 
   const handleSave = () => {
-    addWord(word, meaning ?? word);
+    const fallbackMeaning = lookup?.definitions[0]?.text ?? lookup?.meaning ?? word;
+    addWord(word, fallbackMeaning, {
+      phonetic: lookup?.phonetic,
+      definitions: lookup?.definitions,
+      examples: lookup?.examples,
+    });
     setStatus(getStatus(word) ?? "unfamiliar");
   };
 
   const displayWord = curated?.word ?? word;
   const isSaved = status !== null;
+  const hasRichLookup = !curated && !!lookup && lookup.definitions.length > 0;
 
   return (
     <div
@@ -64,7 +80,7 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[85dvh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b flex items-center justify-between bg-gray-50 shrink-0">
@@ -86,25 +102,38 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
                 className="flex items-center gap-2 text-sm text-gray-600 hover:text-teal-600 transition-colors"
               >
                 <span className="text-gray-400">[{accent}]</span>
-                {curated ? (
-                  <span className="font-mono">{accent === "UK" ? curated.phonetic.uk : curated.phonetic.us}</span>
-                ) : (
-                  <span className="text-gray-400 italic">Listen</span>
-                )}
+                {(() => {
+                  const phonetic = curated?.phonetic ?? lookup?.phonetic;
+                  const text = accent === "UK" ? phonetic?.uk : phonetic?.us;
+                  return text ? (
+                    <span className="font-mono">{text}</span>
+                  ) : (
+                    <span className="text-gray-400 italic">Listen</span>
+                  );
+                })()}
                 <Volume2 className="w-4 h-4 text-teal-600" />
               </button>
             ))}
           </div>
 
-          {curated ? (
+          {isLoadingMeaning && !curated && (
+            <div className="border-t pt-3">
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Looking up...
+              </div>
+            </div>
+          )}
+
+          {curated || hasRichLookup ? (
             <>
               <div className="border-t pt-3 mb-3">
                 <p className="text-xs text-gray-400 mb-2">Definitions</p>
                 <div className="space-y-3">
-                  {curated.definitions.map((def, i) => (
+                  {(curated?.definitions ?? lookup!.definitions).map((def, i) => (
                     <div key={i}>
                       <p className="text-sm text-gray-700 leading-relaxed">
-                        <span className="text-gray-400 mr-1.5">[{def.pos}]</span>
+                        {def.pos && <span className="text-gray-400 mr-1.5">[{def.pos}]</span>}
                         {def.text}
                       </p>
                       {nativeLanguage && def.translation?.[nativeLanguage] && (
@@ -116,51 +145,51 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
                   ))}
                 </div>
               </div>
-              <div className="border-t pt-3">
-                <p className="text-xs text-gray-400 mb-2">Examples</p>
-                <div className="space-y-3">
-                  {curated.examples.map((example, i) => (
-                    <div key={i}>
-                      <p className="text-sm text-gray-700 leading-relaxed">{example.text}</p>
-                      {nativeLanguage && example.translation?.[nativeLanguage] && (
-                        <p className="text-xs text-gray-400 leading-relaxed mt-1">
-                          {example.translation[nativeLanguage]}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+              {(curated?.examples ?? lookup!.examples).length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-xs text-gray-400 mb-2">Examples</p>
+                  <div className="space-y-3">
+                    {(curated?.examples ?? lookup!.examples).map((example, i) => (
+                      <div key={i}>
+                        <p className="text-sm text-gray-700 leading-relaxed">{example.text}</p>
+                        {nativeLanguage && example.translation?.[nativeLanguage] && (
+                          <p className="text-xs text-gray-400 leading-relaxed mt-1">
+                            {example.translation[nativeLanguage]}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           ) : (
-            <div className="border-t pt-3">
-              <p className="text-xs text-gray-400 mb-2">Meaning</p>
-              {isLoadingMeaning && (
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Translating...
-                </div>
-              )}
-              {meaningFailed && !isLoadingMeaning && (
-                <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50">
-                  <span className="text-xs text-red-600">Meaning unavailable right now.</span>
-                  <button
-                    type="button"
-                    onClick={() => setRetryCount((n) => n + 1)}
-                    className="text-xs font-medium text-red-700 underline shrink-0"
-                  >
-                    Retry
-                  </button>
-                </div>
-              )}
-              {meaning && !isLoadingMeaning && (
-                <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg px-3 py-2">{meaning}</p>
-              )}
-            </div>
+            !isLoadingMeaning && (
+              <div className="border-t pt-3">
+                <p className="text-xs text-gray-400 mb-2">Meaning</p>
+                {meaningFailed && (
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50">
+                    <span className="text-xs text-red-600">Meaning unavailable right now.</span>
+                    <button
+                      type="button"
+                      onClick={() => setRetryCount((n) => n + 1)}
+                      className="text-xs font-medium text-red-700 underline shrink-0"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+                {lookup?.meaning && !meaningFailed && (
+                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg px-3 py-2">
+                    {lookup.meaning}
+                  </p>
+                )}
+              </div>
+            )
           )}
         </div>
 
-        <div className="p-4 border-t shrink-0">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t shrink-0">
           <button
             type="button"
             onClick={handleSave}

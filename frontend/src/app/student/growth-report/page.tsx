@@ -35,7 +35,7 @@ export default function GrowthReportPage() {
   }, []);
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <AppHeader title="Growth Report" onBack={() => router.push("/student/dashboard")} />
 
       <div className="px-4 pt-3 pb-2 shrink-0">

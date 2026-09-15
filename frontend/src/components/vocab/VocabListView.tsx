@@ -107,7 +107,7 @@ export function VocabListView({
         )}
       </div>
 
-      <div className="p-4 border-t bg-white shrink-0">
+      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t bg-white shrink-0">
         <button
           type="button"
           onClick={onStartTest}

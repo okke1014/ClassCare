@@ -60,7 +60,7 @@ export function ReadingModeTest({ words, nativeLanguage, onMarkFamiliar, onFinis
             Correct words moved to the Familiar tab. Words you missed stay in Unfamiliar for another round.
           </p>
         </div>
-        <div className="p-4 border-t shrink-0">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t shrink-0">
           <button
             type="button"
             onClick={onFinish}
@@ -192,7 +192,7 @@ export function ReadingModeTest({ words, nativeLanguage, onMarkFamiliar, onFinis
         )}
       </div>
 
-      <div className="p-4 border-t shrink-0">
+      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t shrink-0">
         <button
           type="button"
           onClick={handleNext}

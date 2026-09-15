@@ -86,9 +86,9 @@ export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[90dvh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50 shrink-0">
           <h3 className="font-bold text-lg">Practice Pronunciation</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full">
             <X size={20} className="text-gray-500" />
@@ -96,7 +96,7 @@ export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
         </div>
 
         {/* Content */}
-        <div className="p-6 flex flex-col items-center gap-6">
+        <div className="p-6 flex flex-col items-center gap-6 overflow-y-auto">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-1">{word.text}</h2>
             {word.dictionary_phonetic && (
@@ -139,7 +139,7 @@ export function WordPracticeDialog({ word, onClose }: WordPracticeDialogProps) {
         </div>
 
         {/* Footer Controls */}
-        <div className="p-6 pt-0 flex justify-center">
+        <div className="p-6 pt-0 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex justify-center shrink-0">
             {!isRecording ? (
                 <button 
                     onClick={startRecording}

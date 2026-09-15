@@ -267,6 +267,21 @@ export function AudioScriptPlayer({
     play();
   };
 
+  const handleTabChange = (tab: "script" | "report") => {
+    if (tab === "report") {
+      // The translation/dictionary popups float independently of the tab content,
+      // so leaving the Script tab must explicitly close them and stop playback.
+      setSelectedSegmentIndex(null);
+      setSegmentTranslation(null);
+      setIsTranslating(false);
+      setTranslationFailed(false);
+      setDictionaryWord(null);
+      setSelectedWord(null);
+      pause();
+    }
+    setActiveTab(tab);
+  };
+
   const handleStudentSentenceClick = (segment: STTSegment) => {
     const start = segment.words[0]?.start;
     if (typeof start === "number") {
@@ -288,7 +303,7 @@ export function AudioScriptPlayer({
       {/* Tab Bar */}
       <div className="flex border-b bg-white shrink-0">
         <button
-          onClick={() => setActiveTab("script")}
+          onClick={() => handleTabChange("script")}
           className={cn(
             "flex-1 py-2.5 text-sm font-medium transition-colors",
             activeTab === "script"
@@ -300,7 +315,7 @@ export function AudioScriptPlayer({
         </button>
         {(learningReport || recommendations) && (
           <button
-            onClick={() => setActiveTab("report")}
+            onClick={() => handleTabChange("report")}
             className={cn(
               "flex-1 py-2.5 text-sm font-medium transition-colors",
               activeTab === "report"
@@ -712,8 +727,8 @@ export function AudioScriptPlayer({
       )}
 
       {/* Control Bar */}
-      <div className="bg-white border-t border-gray-200 p-4 shrink-0 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-8">
-        <div className="flex items-center gap-4">
+      <div className="bg-white border-t border-gray-200 px-4 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom))] shrink-0 z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={togglePlay}
             aria-label={state.isPlaying ? "Pause" : "Play"}

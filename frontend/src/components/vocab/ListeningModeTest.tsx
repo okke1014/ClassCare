@@ -44,7 +44,7 @@ export function ListeningModeTest({ words, nativeLanguage, onMarkFamiliar, onFin
             Correctly spelled words moved to the Familiar tab.
           </p>
         </div>
-        <div className="p-4 border-t shrink-0">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t shrink-0">
           <button
             type="button"
             onClick={onFinish}
@@ -247,7 +247,7 @@ export function ListeningModeTest({ words, nativeLanguage, onMarkFamiliar, onFin
       </div>
 
       {submitted !== null && (
-        <div className="p-4 border-t shrink-0">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t shrink-0">
           <button
             type="button"
             onClick={handleNext}

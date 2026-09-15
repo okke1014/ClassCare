@@ -95,11 +95,11 @@ export function WordDetailView({ word, nativeLanguage, onMarkFamiliar, onMarkUnf
         )}
       </div>
 
-      <div className="flex items-stretch border-t shrink-0">
+      <div className="flex items-stretch border-t shrink-0 pb-[env(safe-area-inset-bottom)]">
         <button
           type="button"
           onClick={() => onMarkUnfamiliar(word.id)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           <XCircle className="w-4 h-4 text-rose-500" />
           Unfamiliar
@@ -108,7 +108,7 @@ export function WordDetailView({ word, nativeLanguage, onMarkFamiliar, onMarkUnf
         <button
           type="button"
           onClick={() => onMarkFamiliar(word.id)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-medium text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors"
         >
           <CheckCircle2 className="w-4 h-4 text-teal-500" />
           Familiar

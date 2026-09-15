@@ -25,7 +25,7 @@ export default function StudentDashboard() {
 
   if (!user) {
     return (
-      <div className="h-screen flex flex-col animate-pulse">
+      <div className="h-dvh flex flex-col animate-pulse">
         <AppHeader right={<div className="w-8 h-8 rounded-full bg-gray-200" />} />
         <div className="px-4 py-3">
           <div className="h-5 w-40 rounded bg-gray-200" />
@@ -48,7 +48,7 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       <AppHeader
         right={
           <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-700">

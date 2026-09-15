@@ -35,7 +35,7 @@ export function AppHeader({ onBack, title, subtitle, right }: AppHeaderProps) {
 
   if (centerLogo) {
     return (
-      <header className="relative h-14 px-4 border-b bg-white flex items-center shrink-0 z-10">
+      <header className="relative min-h-14 pt-[env(safe-area-inset-top)] px-4 border-b bg-white flex items-center shrink-0 z-10">
         <div className="flex-1 flex items-center min-w-0">{backButton}</div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center min-w-0 max-w-[calc(100%-7rem)]">
           {logo}
@@ -49,7 +49,7 @@ export function AppHeader({ onBack, title, subtitle, right }: AppHeaderProps) {
   }
 
   return (
-    <header className="h-14 px-4 border-b bg-white flex items-center justify-between gap-2 shrink-0 z-10">
+    <header className="min-h-14 pt-[env(safe-area-inset-top)] px-4 border-b bg-white flex items-center justify-between gap-2 shrink-0 z-10">
       <div className="flex items-center gap-1 min-w-0">
         {backButton}
         <div className="flex flex-col min-w-0">

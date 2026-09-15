@@ -49,7 +49,7 @@ export default function ClassDetailPage() {
 
   if (!event) {
     return (
-      <div className="flex flex-col h-screen bg-background">
+      <div className="flex flex-col h-dvh bg-background">
         <AppHeader onBack={() => router.back()} />
         <div className="flex-1 flex items-center justify-center">
           <EmptyState
@@ -67,7 +67,7 @@ export default function ClassDetailPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-dvh bg-background">
       <AppHeader onBack={() => router.back()} />
 
       <div className="flex-1 overflow-hidden">

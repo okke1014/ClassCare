@@ -16,7 +16,7 @@ export function StudentNav() {
   const router = useRouter();
 
   return (
-    <nav className="h-16 border-t bg-white flex items-stretch shrink-0">
+    <nav className="min-h-16 pb-[env(safe-area-inset-bottom)] border-t bg-white/95 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.04)] flex items-stretch shrink-0">
       {NAV_ITEMS.map((item) => {
         const isActive = pathname?.startsWith(item.href);
         const Icon = item.icon;
@@ -26,7 +26,7 @@ export function StudentNav() {
             type="button"
             onClick={() => router.push(item.href)}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 text-xs font-medium transition-colors",
+              "flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[11px] sm:text-xs font-medium transition-colors active:bg-gray-50",
               isActive ? "text-blue-600" : "text-gray-400 hover:text-gray-600"
             )}
           >

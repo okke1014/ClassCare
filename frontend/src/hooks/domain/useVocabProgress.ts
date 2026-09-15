@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { VOCAB_WORDS, findVocabWordByText, type VocabWord } from "@/lib/vocabData";
+import {
+  VOCAB_WORDS,
+  findVocabWordByText,
+  type VocabWord,
+  type VocabDefinition,
+  type VocabExample,
+} from "@/lib/vocabData";
 
 export type VocabStatus = "unfamiliar" | "familiar";
 
@@ -48,17 +54,25 @@ const saveCustomWords = (words: VocabWord[]) => {
   }
 };
 
+/** Optional richer dictionary data captured alongside a quick lookup (phonetics/definitions/examples). */
+export interface CustomVocabDetails {
+  phonetic?: { uk: string; us: string };
+  definitions?: VocabDefinition[];
+  examples?: VocabExample[];
+}
+
 /** Words saved on the fly from lesson scripts (e.g. via the audio player's dictionary popup). */
 export const buildCustomVocabWord = (
   word: string,
-  meaning: string
+  meaning: string,
+  details?: CustomVocabDetails
 ): VocabWord => ({
   id: `custom-${word.trim().toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
   word: word.trim(),
-  phonetic: { uk: "", us: "" },
+  phonetic: details?.phonetic ?? { uk: "", us: "" },
   meaning,
-  definitions: [],
-  examples: [],
+  definitions: details?.definitions ?? [],
+  examples: details?.examples ?? [],
   addedAt: new Date().toISOString().slice(0, 10),
 });
 
@@ -103,13 +117,13 @@ export const useVocabProgress = () => {
    * entry (or was saved before), its existing status is left untouched.
    */
   const addWord = useCallback(
-    (word: string, meaning: string): { id: string; alreadySaved: boolean } => {
+    (word: string, meaning: string, details?: CustomVocabDetails): { id: string; alreadySaved: boolean } => {
       const curated = findVocabWordByText(word);
       if (curated) {
         return { id: curated.id, alreadySaved: !!progress[curated.id] };
       }
 
-      const custom = buildCustomVocabWord(word, meaning);
+      const custom = buildCustomVocabWord(word, meaning, details);
       const existing = customWords.find((w) => w.id === custom.id);
       if (existing) {
         return { id: existing.id, alreadySaved: true };
