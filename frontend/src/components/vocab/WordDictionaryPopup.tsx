@@ -62,17 +62,29 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
 
   const handleSave = () => {
     const fallbackMeaning = lookup?.definitions[0]?.text ?? lookup?.meaning ?? word;
-    addWord(word, fallbackMeaning, {
-      phonetic: lookup?.phonetic,
-      definitions: lookup?.definitions,
-      examples: lookup?.examples,
-    });
-    setStatus(getStatus(word) ?? "unfamiliar");
+    addWord(word, fallbackMeaning, lookup
+      ? {
+          phonetic: { uk: lookup.phonetic?.uk ?? "", us: lookup.phonetic?.us ?? "" },
+          definitions: lookup.definitions ?? [],
+          examples: lookup.examples ?? [],
+        }
+      : undefined);
+    setStatus("unfamiliar");
   };
+
+  // Once already saved, silently upgrade the stored entry if a still-loading
+  // dictionary lookup finishes afterwards with richer data than what was saved.
+  useEffect(() => {
+    if (status !== null && lookup && lookup.definitions.length > 0) {
+      handleSave();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookup]);
 
   const displayWord = curated?.word ?? word;
   const isSaved = status !== null;
   const hasRichLookup = !curated && !!lookup && lookup.definitions.length > 0;
+  const canSave = !isLoadingMeaning || !!curated;
 
   return (
     <div
@@ -166,7 +178,7 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
           ) : (
             !isLoadingMeaning && (
               <div className="border-t pt-3">
-                <p className="text-xs text-gray-400 mb-2">Meaning</p>
+                <p className="text-xs text-gray-400 mb-2">Definitions</p>
                 {meaningFailed && (
                   <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-red-50">
                     <span className="text-xs text-red-600">Meaning unavailable right now.</span>
@@ -180,9 +192,7 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
                   </div>
                 )}
                 {lookup?.meaning && !meaningFailed && (
-                  <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg px-3 py-2">
-                    {lookup.meaning}
-                  </p>
+                  <p className="text-sm text-gray-700 leading-relaxed">{lookup.meaning}</p>
                 )}
               </div>
             )
@@ -193,16 +203,16 @@ export function WordDictionaryPopup({ word, nativeLanguage, onClose }: WordDicti
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaved}
+            disabled={isSaved || !canSave}
             className={cn(
               "w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-colors",
               isSaved
                 ? "bg-teal-50 text-teal-600 cursor-default"
-                : "bg-teal-500 text-white hover:bg-teal-600"
+                : "bg-teal-500 text-white hover:bg-teal-600 disabled:opacity-60 disabled:cursor-not-allowed"
             )}
           >
             <Star className={cn("w-4 h-4", isSaved && "fill-teal-500")} />
-            {isSaved ? "Saved to Your Vocab List" : "Save to Vocab List"}
+            {isSaved ? "Saved to Your Vocab List" : canSave ? "Save to Vocab List" : "Looking up..."}
           </button>
         </div>
       </div>

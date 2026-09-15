@@ -58,7 +58,7 @@ export function WordDetailView({ word, nativeLanguage, onMarkFamiliar, onMarkUnf
                     <span className="text-gray-400 mr-1.5">[{def.pos}]</span>
                     {def.text}
                   </p>
-                  {nativeLanguage && def.translation[nativeLanguage] && (
+                  {nativeLanguage && def.translation?.[nativeLanguage] && (
                     <p className="text-xs text-gray-400 leading-relaxed mt-1 pl-[1.6em]">
                       {def.translation[nativeLanguage]}
                     </p>
@@ -76,7 +76,7 @@ export function WordDetailView({ word, nativeLanguage, onMarkFamiliar, onMarkUnf
               {word.examples.map((example, i) => (
                 <div key={i}>
                   <p className="text-sm text-gray-700 leading-relaxed">{example.text}</p>
-                  {nativeLanguage && example.translation[nativeLanguage] && (
+                  {nativeLanguage && example.translation?.[nativeLanguage] && (
                     <p className="text-xs text-gray-400 leading-relaxed mt-1">
                       {example.translation[nativeLanguage]}
                     </p>

@@ -169,7 +169,7 @@ export function ReadingModeTest({ words, nativeLanguage, onMarkFamiliar, onFinis
                   <span className="text-gray-400 mr-1">[{question.definitions[0].pos}]</span>
                   {question.definitions[0].text}
                 </p>
-                {nativeLanguage && question.definitions[0].translation[nativeLanguage] && (
+                {nativeLanguage && question.definitions[0].translation?.[nativeLanguage] && (
                   <p className="text-xs text-gray-400 leading-relaxed mt-1 pl-[1.2em]">
                     {question.definitions[0].translation[nativeLanguage]}
                   </p>
@@ -181,7 +181,7 @@ export function ReadingModeTest({ words, nativeLanguage, onMarkFamiliar, onFinis
             {question.examples[0] && (
               <>
                 <p className="text-xs text-gray-500 leading-relaxed mt-1.5">{question.examples[0].text}</p>
-                {nativeLanguage && question.examples[0].translation[nativeLanguage] && (
+                {nativeLanguage && question.examples[0].translation?.[nativeLanguage] && (
                   <p className="text-xs text-gray-400 leading-relaxed mt-1">
                     {question.examples[0].translation[nativeLanguage]}
                   </p>

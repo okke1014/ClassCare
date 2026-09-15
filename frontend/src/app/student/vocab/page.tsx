@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { StudentNav } from "@/components/StudentNav";
@@ -43,7 +43,19 @@ export default function VocabPage() {
     totalCount,
     markFamiliar,
     markUnfamiliar,
+    enrichWord,
   } = useVocabProgress();
+
+  const enrichAttempted = useRef(new Set<string>());
+  useEffect(() => {
+    const incomplete = [...unfamiliarWords, ...familiarWords].filter(
+      (w) => w.id.startsWith("custom-") && (w.definitions?.length ?? 0) === 0 && !enrichAttempted.current.has(w.id)
+    );
+    for (const word of incomplete) {
+      enrichAttempted.current.add(word.id);
+      void enrichWord(word.word, nativeLanguage);
+    }
+  }, [unfamiliarWords, familiarWords, nativeLanguage, enrichWord]);
 
   const activeMode = MODES.find((m) => m.id === mode)!;
 
